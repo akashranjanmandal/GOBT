@@ -1259,8 +1259,6 @@ export default function GOBTApp() {
   ══════════════════════════════════════════════════════ */
   return (
     <>
-      <div style={{color: 'white', position: 'absolute', zIndex: 9999, top: 0, left: 0}}>Test - Component is rendering</div>
-
       {/* ── UNIVERSE BACKGROUND ── */}
       <div id="universe-bg" aria-hidden="true" />
       <div id="universe-stars" aria-hidden="true" />
