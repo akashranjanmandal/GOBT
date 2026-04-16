@@ -1,7 +1,5 @@
 "use client";
 
-console.log("GOBTApp component loaded");
-
 import React, {
   useEffect,
   useRef,
@@ -22,20 +20,20 @@ const CLIENTS = [
     logo: "/agile-logo.png",
   },
   {
+    name: "Mohini Printers",
+    url: "mohiniprintshop.org",
+    type: "Design",
+    since: "2024",
+    desc: "create stunning graphics for any platform",
+    logo: "/mohini.png",
+  },
+  {
     name: "PizzaHap",
     url: "pizzahap.com",
     type: "Food & Beverage",
     since: "2024",
     desc: "Crafted Fire. Real Flavor. — brand identity, website & mobile app (launching soon)",
     logo: "/pizzahap-logo.png",
-  },
-  {
-    name: "SureGeM India",
-    url: "suregem.in",
-    type: "Government E-Marketplace",
-    since: "2025",
-    desc: "GeM consulting platform — complete web build, vendor onboarding & catalogue management system",
-    logo: null,
   },
   {
     name: "GFTD",
@@ -68,14 +66,6 @@ const CLIENTS = [
     since: "2024",
     desc: "Where Luxury Meets Elegance — brand identity, luxury e-commerce & premium UX design",
     logo: "/aitqwa-logo.png",
-  },
-  {
-    name: "Math Coders",
-    url: "mathcoders.org",
-    type: "EdTech / STEM",
-    since: "2025",
-    desc: "Robotics & STEM education platform — franchise system, school programs, shop & events",
-    logo: "/mathcoder-logo.png",
   },
   {
     name: "Gharkamali",
@@ -128,17 +118,17 @@ const WORKS = [
     image: "/img/GFTD.png",
   },
   {
-    id: 4,
-    title: "Math Coders",
-    tag: "EdTech Platform",
-    desc: "STEM & Robotics platform for schools across India — franchise, programs, kit shop & events.",
-    tech: ["WordPress", "WooCommerce", "PHP"],
-    bg: "#070f08",
-    accent: "#16a34a",
+    id: 10,
+    title: "Mohini Printers",
+    tag: "Dashboard System",
+    desc: "Modern print management dashboard with design workflow & client handling system.",
+    tech: ["Next.js", "Dashboard UI", "Node.js"],
+    bg: "#0a0a0a",
+    accent: "#ff6a2b",
     category: "Web",
-    live: "mathcoders.org",
+    live: "mohiniprintshop.org",
     soon: false,
-    image: "/img/Mathcoders.png",
+    image: "/img/mohini.png",
   },
   {
     id: 5,
@@ -168,19 +158,6 @@ const WORKS = [
   },
   {
     id: 7,
-    title: "SureGeM India",
-    tag: "Consulting Platform",
-    desc: "GeM consulting portal with vendor registration, catalogue management & telephonic support system.",
-    tech: ["WordPress", "SEO", "CRM"],
-    bg: "#060f0c",
-    accent: "#0891b2",
-    category: "Web",
-    live: "suregem.in",
-    soon: false,
-    image: "/img/Suregem.png",
-  },
-  {
-    id: 8,
     title: "PizzaHap App",
     tag: "Mobile Application",
     desc: "Full-stack food ordering app with live tracking, POS integration & driver dispatch. Launching on Play Store.",
@@ -193,7 +170,7 @@ const WORKS = [
     image: "/img/pizzahap.png",
   },
   {
-    id: 9,
+    id: 8,
     title: "Gharkamali App",
     tag: "Mobile Application",
     desc: "On-demand home services marketplace — 500+ skilled technicians, real-time booking. Launching soon.",
