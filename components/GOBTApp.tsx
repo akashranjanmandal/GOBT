@@ -956,9 +956,12 @@ function TransformStage() {
           const r = Math.round(200 - s.hue * 40);
           const g = Math.round(140 + s.hue * 30);
           const b = Math.round(40 + s.hue * 50);
-          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.32)`;
-          ctx.lineWidth = 1.1;
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.4)`;
+          ctx.lineWidth = 1.2;
+          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.45)`;
+          ctx.shadowBlur = 3.5;
           ctx.stroke();
+          ctx.shadowBlur = 0;
 
           /* traveling flare — own speed + phase per spiral */
           const at = (now * s.flareSpeed + s.flarePhase) % 1;
@@ -1007,152 +1010,28 @@ function TransformStage() {
 
   return (
     <div className="tf-stage" aria-label="8 uneven signal spirals converging into a digitalisation process">
+      <div className="tf-divider" aria-hidden="true" />
       <div className="tf-storyboard" ref={wrapRef}>
         <canvas ref={canvasRef} className="tf-canvas" aria-hidden="true" />
         <div className="tf-cart">
           <div className="tf-box" ref={boxRef}>
-            <span className="tf-box-eyebrow">Process</span>
-            <span>Digitalisation</span>
+            <div className="tf-box-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="5" cy="12" r="2" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="19" cy="6" r="2" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="19" cy="18" r="2" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M7 11.2L17 6.8M7 12.8L17 17.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div className="tf-box-text">
+              <span className="tf-box-eyebrow">Process</span>
+              <span className="tf-box-title">Digitalisation</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
-
-/* ──────────────────────────────────────────
-   HERO PILLOW DENT
-   Like pressing a single finger into a pillow: a soft, irregularly
-   distorted dimple appears exactly under the cursor on hover — not a
-   round dot. Drawn as a ring of points around the pointer whose radii
-   wobble independently (each with its own phase/speed via simplex-ish
-   layered sine noise), redrawn every frame so the blob's silhouette
-   keeps subtly warping while it sits glued to the cursor position.
-────────────────────────────────────────── */
-function HeroStarTrail() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const host = canvas?.parentElement;
-    if (!canvas || !host) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
-
-    let raf = 0;
-    let width = 0;
-    let height = 0;
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const GOLD = "255, 214, 140";
-
-    const resize = () => {
-      const rect = host.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      canvas.style.width = width + "px";
-      canvas.style.height = height + "px";
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const pointer = { x: -9999, y: -9999, active: 0 };
-    const onMove = (e: PointerEvent) => {
-      const rect = host.getBoundingClientRect();
-      pointer.x = e.clientX - rect.left;
-      pointer.y = e.clientY - rect.top;
-    };
-    const onLeave = () => { pointer.x = -9999; pointer.y = -9999; };
-    host.addEventListener("pointermove", onMove, { passive: true });
-    host.addEventListener("pointerleave", onLeave, { passive: true });
-
-    /* fixed random per-point wobble parameters — each of the blob's
-       control points breathes at its own speed/phase/amplitude, so
-       the silhouette never pulses uniformly like a simple circle */
-    const POINTS = 14;
-    const wobble = Array.from({ length: POINTS }, () => ({
-      speed: 0.0009 + Math.random() * 0.0016,
-      phase: Math.random() * Math.PI * 2,
-      amp: 0.28 + Math.random() * 0.4,
-    }));
-
-    const baseR = 15;
-
-    const draw = () => {
-      raf = requestAnimationFrame(draw);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, width, height);
-
-      pointer.active += ((pointer.x > -9000 ? 1 : 0) - pointer.active) * 0.14;
-      if (pointer.active < 0.01) return;
-
-      const a = pointer.active;
-      const cx = pointer.x;
-      const cy = pointer.y;
-      const now = Date.now();
-
-      /* build the distorted ring of points */
-      const pts = wobble.map((w, i) => {
-        const angle = (i / POINTS) * Math.PI * 2;
-        const wob = Math.sin(now * w.speed + w.phase) * w.amp;
-        const r = baseR * (1 + wob) * a;
-        return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
-      });
-
-      ctx.globalCompositeOperation = "lighter";
-
-      /* soft outer glow following the same distorted silhouette,
-         built by tracing the point ring as a smooth closed curve */
-      const traceBlob = () => {
-        ctx.beginPath();
-        for (let i = 0; i <= pts.length; i++) {
-          const p0 = pts[i % pts.length];
-          const p1 = pts[(i + 1) % pts.length];
-          const mx = (p0.x + p1.x) / 2;
-          const my = (p0.y + p1.y) / 2;
-          if (i === 0) ctx.moveTo(mx, my);
-          else ctx.quadraticCurveTo(p0.x, p0.y, mx, my);
-        }
-        ctx.closePath();
-      };
-
-      /* soft halo bleeding just past the blob's own edge */
-      traceBlob();
-      const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 2.2 * a);
-      halo.addColorStop(0, `rgba(${GOLD}, ${0.3 * a})`);
-      halo.addColorStop(0.6, `rgba(${GOLD}, ${0.12 * a})`);
-      halo.addColorStop(1, `rgba(${GOLD}, 0)`);
-      ctx.fillStyle = halo;
-      ctx.fill();
-
-      /* the blob itself, solidly filled with bright white light —
-         not a fading gradient, an actual lit-up shape */
-      traceBlob();
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.92 * a})`;
-      ctx.fill();
-
-      /* thin warm rim where the light meets the dark background */
-      traceBlob();
-      ctx.strokeStyle = `rgba(255, 240, 210, ${0.7 * a})`;
-      ctx.lineWidth = 1.1;
-      ctx.stroke();
-    };
-    raf = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-      host.removeEventListener("pointermove", onMove);
-      host.removeEventListener("pointerleave", onLeave);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="hero-star-trail" aria-hidden="true" />;
 }
 
 /* ──────────────────────────────────────────
@@ -2142,7 +2021,6 @@ export default function GOBTApp() {
         </div>
         <div className="hero-noise" aria-hidden="true" />
         <div className="hero-vignette" aria-hidden="true" />
-        <HeroStarTrail />
         <div className="hero-inner hero-inner-centered">
           <div className="hero-text-col hero-text-col-centered">
             <div className="hero-eyebrow">
