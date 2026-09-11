@@ -1,19 +1,44 @@
 "use client";
 
-import React, {
+import {
   useEffect,
   useRef,
   useState,
   useCallback,
+  type CSSProperties,
 } from "react";
 import * as THREE from "three";
+import Lenis from "lenis";
 
 /* ──────────────────────────────────────────
    STATIC DATA
 ────────────────────────────────────────── */
-const TYPEWRITER_WORDS = ["Digital Products.", "Mobile Apps.", "Web Platforms."];
+const NAV_ITEMS = [
+  { n: "01", label: "Services", id: "services" },
+  { n: "02", label: "Process", id: "process" },
+  { n: "03", label: "Estimate", id: "estimate" },
+  { n: "04", label: "Why GOBT", id: "why" },
+  { n: "05", label: "Team", id: "team" },
+  { n: "06", label: "Contact", id: "contact" },
+];
 
 const CLIENTS = [
+  {
+    name: "Tata Communications",
+    url: "gobtxtata.gobt.in",
+    type: "Telecom / Enterprise",
+    since: "2025",
+    desc: "3D eyewear fitting and inspection experience built for a Tata Communications initiative",
+    logo: "/tata.png",
+  },
+  {
+    name: "Navaru",
+    url: "navaru.in",
+    type: "Corporate",
+    since: "2024",
+    desc: "Business website and brand presence",
+    logo: "/naavru.png",
+  },
   {
     name: "AGILE Engineering",
     url: "agileengcon.in",
@@ -36,7 +61,7 @@ const CLIENTS = [
     url: "pizzahap.com",
     type: "Food & Beverage",
     since: "2024",
-    desc: "Crafted Fire. Real Flavor. Brand identity, website & mobile app launching soon",
+    desc: "Crafted Fire. Real Flavor. Brand identity, website & mobile app",
     logo: "/pizzahap-logo.png",
   },
   {
@@ -73,22 +98,33 @@ const CLIENTS = [
   },
   {
     name: "Gharkamali",
-    url: "gkmapp.netlify.app",
+    url: "gharkamali.com",
     type: "Home Services",
     since: "2022",
-    desc: "On-demand home services marketplace with 500+ technicians, React Native app launching soon",
+    desc: "On-demand home services marketplace with 500+ technicians, web platform and React Native app",
     logo: "/gkm-logo.png",
   },
 ];
 
 const WORKS = [
   {
+    id: 19,
+    title: "Tata Communications",
+    tag: "3D Product Experience",
+    desc: "Immersive 3D eyewear fitting and inspection tool with real-time 360° rotation, frame specs and multi-model switching.",
+    tech: ["Next.js", "Three.js", "WebGL"],
+    accent: "#22d3ee",
+    category: "Web",
+    live: "gobtxtata.gobt.in",
+    soon: false,
+    image: "/img/tatacom.png",
+  },
+  {
     id: 1,
     title: "PizzaHap",
     tag: "Web + Branding",
     desc: "Fire-themed brand identity, high-conversion website and mobile app for Uttarakhand's boldest food brand.",
     tech: ["Next.js", "Figma", "Tailwind"],
-    bg: "#140a08",
     accent: "#e84040",
     category: "Web",
     live: "pizzahap.com",
@@ -101,7 +137,6 @@ const WORKS = [
     tag: "Corporate Web",
     desc: "Enterprise-grade corporate presence for Kolkata's premier engineering consultant with responsive, SEO-optimised architecture.",
     tech: ["Next.js", "SEO", "GSAP"],
-    bg: "#080c18",
     accent: "#4060ff",
     category: "Web",
     live: "agileengcon.in",
@@ -114,7 +149,6 @@ const WORKS = [
     tag: "E-Commerce Platform",
     desc: "The Art of Gifting full e-commerce with AI recommendations, Razorpay, real-time inventory.",
     tech: ["Next.js", "Node.js", "PostgreSQL"],
-    bg: "#0f0818",
     accent: "#7c3aed",
     category: "Web",
     live: "gftd.in",
@@ -127,7 +161,6 @@ const WORKS = [
     tag: "Dashboard System",
     desc: "Modern print management dashboard with design workflow & client handling system.",
     tech: ["Next.js", "Dashboard UI", "Node.js"],
-    bg: "#0a0a0a",
     accent: "#ff6a2b",
     category: "Web",
     live: "mohiniprintshop.org",
@@ -140,7 +173,6 @@ const WORKS = [
     tag: "Booking Platform",
     desc: "Premium astrology consultation with live session booking, astrologer profiles & Vedic calendar.",
     tech: ["React", "Node.js", "Stripe"],
-    bg: "#130e04",
     accent: "#d97706",
     category: "Web",
     live: "accurateastro.in",
@@ -153,28 +185,23 @@ const WORKS = [
     tag: "Luxury E-Commerce",
     desc: "Where Luxury Meets Elegance: curated fashion store with immersive product photography & UX.",
     tech: ["Next.js", "Shopify", "Figma"],
-    bg: "#100808",
     accent: "#c2810a",
     category: "Web",
     live: "altaqwa.in",
     soon: false,
     image: "/img/altaqwa.png",
   },
-  /* tag/desc/tech below are placeholders — not currently rendered by the
-     web card (text was removed per an earlier design pass) but kept for
-     when/if a text view returns; replace with real project details */
   {
     id: 11,
     title: "Navaru",
     tag: "Corporate Web",
     desc: "Business website and brand presence.",
     tech: ["Next.js"],
-    bg: "#0a0a0a",
     accent: "#b47e11",
     category: "Web",
     live: "navaru.in",
     soon: false,
-    image: "",
+    image: "/img/navaru-image.png",
   },
   {
     id: 12,
@@ -182,12 +209,11 @@ const WORKS = [
     tag: "Corporate Web",
     desc: "Website for an elevator and lift installation & servicing company.",
     tech: ["Next.js"],
-    bg: "#0a0e12",
     accent: "#3b82f6",
     category: "Web",
     live: "oasiselevators.co.in",
     soon: false,
-    image: "",
+    image: "/img/oasis-image.png",
   },
   {
     id: 13,
@@ -195,12 +221,11 @@ const WORKS = [
     tag: "Education",
     desc: "Website for an abacus and mental-math training institute.",
     tech: ["Next.js"],
-    bg: "#120a12",
     accent: "#a855f7",
     category: "Web",
     live: "mastermindabacusodisha.com",
     soon: false,
-    image: "",
+    image: "/img/mma-image.png",
   },
   {
     id: 14,
@@ -208,77 +233,59 @@ const WORKS = [
     tag: "Corporate Web",
     desc: "Organisation website.",
     tech: ["Next.js"],
-    bg: "#0a1210",
     accent: "#22c55e",
     category: "Web",
     live: "ideashapers.org",
     soon: false,
-    image: "",
+    image: "/img/ideashapers-image.png",
+  },
+  {
+    id: 17,
+    title: "SureGeM India",
+    tag: "GeM Consulting Portal",
+    desc: "Government e-Marketplace (GeM) consulting portal with a conversion-focused funnel that tripled inbound inquiries in month one.",
+    tech: ["Next.js", "SEO"],
+    accent: "#0891b2",
+    category: "Web",
+    live: "",
+    soon: false,
+    image: "/img/Suregem.png",
   },
   {
     id: 7,
     title: "PizzaHap App",
     tag: "Mobile Application",
-    desc: "Full-stack food ordering app with live tracking, POS integration & driver dispatch. Launching on Play Store.",
+    desc: "Full-stack food ordering app with live tracking, POS integration & driver dispatch.",
     tech: ["React Native", "Node.js", "Firebase"],
-    bg: "#140808",
     accent: "#ef4444",
     category: "App",
     live: "",
-    soon: true,
+    soon: false,
     image: "/img/pizzahap.png",
+  },
+  {
+    id: 18,
+    title: "Gharkamali",
+    tag: "Marketplace Web Platform",
+    desc: "On-demand home services marketplace connecting 500+ verified technicians with customers across the city.",
+    tech: ["React", "Node.js", "MongoDB"],
+    accent: "#0ea5e9",
+    category: "Web",
+    live: "gharkamali.com",
+    soon: false,
+    image: "/img/gkm-image.png",
   },
   {
     id: 8,
     title: "Gharkamali App",
     tag: "Mobile Application",
-    desc: "On-demand home services marketplace with 500+ skilled technicians, real-time booking. Launching soon.",
+    desc: "On-demand home services marketplace with 500+ skilled technicians and real-time booking.",
     tech: ["React Native", "Maps API", "Socket.io"],
-    bg: "#07101a",
     accent: "#0ea5e9",
     category: "App",
-    live: "gkmapp.netlify.app",
-    soon: true,
+    live: "gharkamali.com",
+    soon: false,
     image: "/img/Gharkamali.png",
-  },
-  {
-    id: 9,
-    title: "Taskify",
-    tag: "Mobile Application",
-    desc: "GOBT's in-house task and project management app for teams. Image coming soon.",
-    tech: ["React Native", "Node.js"],
-    bg: "#0a0a14",
-    accent: "#b47e11",
-    category: "App",
-    live: "",
-    soon: true,
-    image: "",
-  },
-  {
-    id: 15,
-    title: "Messmate",
-    tag: "Mobile Application",
-    desc: "Mess and food management app. Image coming soon.",
-    tech: ["React Native", "Node.js"],
-    bg: "#0a0f14",
-    accent: "#22c55e",
-    category: "App",
-    live: "",
-    soon: true,
-    image: "",
-  },
-  {
-    id: 16,
-    title: "Gharkamali Gardener",
-    tag: "Mobile Application",
-    desc: "On-demand gardening services booking app. Image coming soon.",
-    tech: ["React Native", "Node.js"],
-    bg: "#0a140a",
-    accent: "#4ade80",
-    category: "App",
-    live: "",
-    soon: true,
-    image: "",
   },
 ];
 
@@ -336,6 +343,12 @@ const TESTIMONIALS = [
     role: "Luxury Lifestyle Brand",
     init: "T",
   },
+  {
+    text: "GOBT delivered our booking platform ahead of schedule with a UX our clients constantly compliment. Rare to find a dev partner this precise and this fast.",
+    name: "Accurate Astro",
+    role: "Astrology Consultation Platform",
+    init: "A",
+  },
 ];
 
 const JOBS = [
@@ -347,7 +360,7 @@ const JOBS = [
     location: "On-site / Hybrid",
     description: `
       <p>GOBT (Group Of Blooming Technicians) is seeking a motivated and technically sound Software Developer to join our growing engineering team on a 1.5-year contract basis. This role is ideal for freshers or early-career developers (0–2 years of experience) with strong programming fundamentals, sharp logical reasoning, and a passion for building scalable, microservice-based backend systems. The candidate will work closely with senior engineers on real-world product development, cloud infrastructure, and database-driven applications.</p>
-      
+
       <h4>Technical Requirements</h4>
       <ul>
         <li><strong>Go (Golang) — Highly Preferred:</strong> Strong understanding of Go's concurrency model, goroutines, channels, and idiomatic Go patterns. Proficiency in building RESTful APIs and microservices using Go.</li>
@@ -476,10 +489,6 @@ const JOBS = [
   }
 ];
 
-/* Client-facing labels — plain language over technical jargon, since
-   this grid is read by non-technical clients deciding what to hire us
-   for, not by other developers. Cards use the same cast-gold texture
-   as the buttons, so no per-card color is needed. */
 const SERVICES = [
   { label: "Websites & Web Dashboards" },
   { label: "Mobile Apps" },
@@ -495,27 +504,16 @@ const SERVICES = [
 ];
 
 const SERVICE_ICONS = [
-  /* Websites & Web Dashboards */
   <svg key="web" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" /><path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.6" /><path d="M7 13l-2 2 2 2M11 13l2 2-2 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  /* Mobile Apps */
   <svg key="app" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="2.5" width="12" height="19" rx="2.2" stroke="currentColor" strokeWidth="1.6" /><path d="M10.5 18.2h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>,
-  /* UI/UX Design */
   <svg key="uiux" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 3l9 16 2-6 6-2-17-8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>,
-  /* Digital Growth */
   <svg key="growth" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 19V5M4 19h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /><path d="M7 15l4-4 3 3 5-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  /* Custom Software */
   <svg key="sw" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  /* Smart Devices & IoT */
   <svg key="iot" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="8" height="8" rx="1.4" stroke="currentColor" strokeWidth="1.6" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>,
-  /* AI Solutions */
   <svg key="ai" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>,
-  /* Branding */
   <svg key="brand" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 3l9 9-8 8-9-9V4h7z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><circle cx="8" cy="8" r="1.4" stroke="currentColor" strokeWidth="1.6" /></svg>,
-  /* Data Collection */
   <svg key="data" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="5.5" rx="8" ry="3" stroke="currentColor" strokeWidth="1.6" /><path d="M4 5.5v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="currentColor" strokeWidth="1.6" /><path d="M4 11.5v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="currentColor" strokeWidth="1.6" /></svg>,
-  /* Cyber Security */
   <svg key="security" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  /* Game Development */
   <svg key="game" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 8h10a4 4 0 014 4v3a3 3 0 01-5.4 1.8L14 15h-4l-1.6 1.8A3 3 0 013 15v-3a4 4 0 014-4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M7.5 10.5v3M6 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><circle cx="16" cy="11" r="0.9" fill="currentColor" /><circle cx="18" cy="13" r="0.9" fill="currentColor" /></svg>,
 ];
 
@@ -528,201 +526,213 @@ const GOBT_STATS = [
   { val: 100, sup: "%", label: "Client Retention" },
 ];
 
-/* Orb positions — galaxy-style spread */
-const CLIENT_ORB_CONFIG = [
-  { left: "6%", top: "12%", size: "lg", drift: 0 },
-  { left: "70%", top: "7%", size: "md", drift: 1 },
-  { left: "84%", top: "40%", size: "sm", drift: 2 },
-  { left: "71%", top: "75%", size: "md", drift: 3 },
-  { left: "33%", top: "86%", size: "md", drift: 0 },
-  { left: "4%", top: "70%", size: "sm", drift: 1 },
-  { left: "3%", top: "37%", size: "lg", drift: 2 },
-  { left: "24%", top: "4%", size: "md", drift: 3 },
-  { left: "60%", top: "18%", size: "sm", drift: 0 },
-] as const;
+const PROCESS_STEPS = [
+  {
+    title: "Brief",
+    desc: "A short call to understand your business, your users and what success looks like. We scope the real problem before touching a single pixel.",
+    image: "/img/AgileEnginnerng.png",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 015.5 4h10.5l4 4v10.5a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 18.5v-13z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M16 4v3.5A1.5 1.5 0 0017.5 9H21M8 12h8M8 15.5h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+    ),
+  },
+  {
+    title: "Build",
+    desc: "Design and development run in tight loops — you see working previews every few days, not a single reveal at the end of the project.",
+    image: "/img/GFTD.png",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    ),
+  },
+  {
+    title: "Launch & Grow",
+    desc: "We ship, monitor and iterate. Every product we hand over comes with the code, the ownership, and a plan for what comes next.",
+    image: "/img/pizzahap.png",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5c2.5 2.4 4 6 4 9.5 0 1.4-.3 2.7-.8 4H8.8c-.5-1.3-.8-2.6-.8-4 0-3.5 1.5-7.1 4-9.5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><circle cx="12" cy="10.5" r="1.6" stroke="currentColor" strokeWidth="1.5" /><path d="M8.5 16.5L6 21l3.5-1.2M15.5 16.5L18 21l-3.5-1.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    ),
+  },
+];
 
-/* ───────────────────────────────────────────
-   TYPEWRITER HOOK — smooth & precise
-─────────────────────────────────────────── */
-function useTypewriter(
-  words: string[],
-  typeSpeed = 45,
-  pause = 1800,
-  deleteSpeed = 22
-) {
-  const [display, setDisplay] = useState("");
-  const [wordIdx, setWordIdx] = useState(0);
-  const [charIdx, setCharIdx] = useState(0);
-  const [deleting, setDeleting] = useState(false);
+const COMPARE_ROWS = [
+  { feature: "You own the full source code", agency: false, gobt: true },
+  { feature: "Direct access to the people building it", agency: false, gobt: true },
+  { feature: "Fixed scope, fixed price — no surprise invoices", agency: false, gobt: true },
+  { feature: "Working preview within days, not months", agency: false, gobt: true },
+];
 
+const COMPARE_ROWS_MORE = [
+  { feature: "Post-launch support included", agency: false, gobt: true },
+  { feature: "Built on modern, maintainable stacks", agency: false, gobt: true },
+  { feature: "SEO & performance baked in from day one", agency: false, gobt: true },
+  { feature: "No lock-in to a proprietary platform", agency: false, gobt: true },
+];
+
+const ESTIMATE_TYPES = ["Website", "Web App", "Mobile App"] as const;
+const ESTIMATE_SCOPES = ["Essential", "Momentum", "Full-Scale"] as const;
+
+type EstimateType = (typeof ESTIMATE_TYPES)[number];
+type EstimateScope = (typeof ESTIMATE_SCOPES)[number];
+
+const ESTIMATE_TIMELINES: Record<EstimateType, Record<EstimateScope, string>> = {
+  Website: { Essential: "2 weeks", Momentum: "3 weeks", "Full-Scale": "4 weeks" },
+  "Web App": { Essential: "4–5 weeks", Momentum: "6 weeks", "Full-Scale": "7–8 weeks" },
+  "Mobile App": { Essential: "4–5 weeks", Momentum: "6 weeks", "Full-Scale": "7–8 weeks" },
+};
+
+const ESTIMATE_TEAM: Record<EstimateScope, string> = {
+  Essential: "1–2 engineers",
+  Momentum: "2–3 engineers + 1 designer",
+  "Full-Scale": "Full squad — design, backend, mobile & QA",
+};
+
+/* ──────────────────────────────────────────
+   SCROLL REVEAL — IntersectionObserver
+────────────────────────────────────────── */
+function useScrollReveal() {
   useEffect(() => {
-    const current = words[wordIdx];
-    let timer: ReturnType<typeof setTimeout>;
-
-    if (!deleting && charIdx < current.length) {
-      timer = setTimeout(() => setCharIdx((i) => i + 1), typeSpeed);
-    } else if (!deleting && charIdx === current.length) {
-      timer = setTimeout(() => setDeleting(true), pause);
-    } else if (deleting && charIdx > 0) {
-      timer = setTimeout(() => setCharIdx((i) => i - 1), deleteSpeed);
-    } else {
-      setDeleting(false);
-      setWordIdx((i) => (i + 1) % words.length);
+    const els = Array.from(
+      document.querySelectorAll(".r-up,.r-left,.r-right,.r-fade,.r-scale")
+    );
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("in-view"));
+      return;
     }
-
-    setDisplay(current.slice(0, charIdx));
-    return () => clearTimeout(timer);
-  }, [charIdx, deleting, wordIdx, words, typeSpeed, pause, deleteSpeed]);
-
-  return { display };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 }
 
 /* ──────────────────────────────────────────
-   WORK VISUAL COMPONENT — fallback placeholder
+   SCRAMBLE TEXT — scroll-triggered decode reveal. Letters render
+   from a shuffled charset and settle into the real string over
+   ~700ms once the element enters the viewport, GOBT's equivalent
+   of the reference site's headline-decode motion signature.
 ────────────────────────────────────────── */
-function WorkVisual({ work }: { work: (typeof WORKS)[0] }) {
-  /* If a real image is provided, show it */
-  if (work.image) {
-    return (
-      <img
-        src={work.image}
-        alt={work.title}
-        className="work-card-img"
-      />
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+function ScrambleText({ text, as: Tag = "span", className }: { text: string; as?: any; className?: string }) {
+  const ref = useRef<HTMLElement>(null);
+  const [display, setDisplay] = useState(text);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let played = false;
+
+    const runScramble = () => {
+      const duration = 700;
+      const start = performance.now();
+
+      const tick = (now: number) => {
+        const p = Math.min(1, (now - start) / duration);
+        const revealCount = Math.floor(p * text.length);
+        let out = "";
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          if (ch === " " || i < revealCount) out += ch;
+          else out += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+        }
+        setDisplay(out);
+        if (p < 1) {
+          rafRef.current = requestAnimationFrame(tick);
+        } else {
+          setDisplay(text);
+          cancelAnimationFrame(rafRef.current);
+        }
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !played) {
+            played = true;
+            io.unobserve(entry.target);
+            runScramble();
+          }
+        });
+      },
+      { threshold: 0.4 }
     );
-  }
+    io.observe(el);
 
-  /* Otherwise render the futuristic placeholder */
-  const base: React.CSSProperties = {
-    width: "100%",
-    height: "100%",
-    background: `linear-gradient(145deg, ${work.bg} 0%, ${work.bg}ee 100%)`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "1.5rem",
-    minHeight: "220px",
-    position: "relative",
-    overflow: "hidden",
-  };
-
-  /* Scanline overlay */
-  const scanlines: React.CSSProperties = {
-    position: "absolute",
-    inset: 0,
-    backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px)",
-    pointerEvents: "none",
-    zIndex: 2,
-  };
-
-  /* Gradient accent top-right */
-  const glowAccent: React.CSSProperties = {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: "60%",
-    height: "60%",
-    background: `radial-gradient(ellipse at 100% 0%, ${work.accent}30 0%, transparent 70%)`,
-    pointerEvents: "none",
-    zIndex: 1,
-  };
-
-  if (work.category === "App") {
-    return (
-      <div style={base}>
-        <div style={scanlines} />
-        <div style={glowAccent} />
-        {/* HUD label */}
-        <div style={{ position: "absolute", top: "0.8rem", left: "1rem", fontFamily: "var(--f-mono)", fontSize: "0.5rem", letterSpacing: "0.2em", color: `${work.accent}80`, textTransform: "uppercase", zIndex: 3 }}>
-          {work.tag}
-        </div>
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: "18%",
-              aspectRatio: "9/19",
-              borderRadius: "14px",
-              background: `linear-gradient(180deg, ${work.accent}10 0%, rgba(0,0,0,0.2) 100%)`,
-              border: `1px solid ${work.accent}45`,
-              margin: "0 0.5rem",
-              transform:
-                i === 1
-                  ? "translateY(-18px)"
-                  : i === 2
-                    ? "translateY(10px)"
-                    : "none",
-              display: "flex",
-              flexDirection: "column" as const,
-              overflow: "hidden",
-              flexShrink: 0,
-              position: "relative" as const,
-              zIndex: 3,
-              boxShadow: `0 8px 30px ${work.accent}20`,
-            }}
-          >
-            <div style={{ height: "8%", background: `${work.accent}25`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: "26%", height: "3px", borderRadius: "3px", background: `${work.accent}90` }} />
-            </div>
-            <div style={{ flex: 1, padding: "5px", display: "flex", flexDirection: "column" as const, gap: "4px" }}>
-              <div style={{ height: "32%", borderRadius: "4px", background: `${work.accent}35` }} />
-              <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.1)", width: "75%" }} />
-              <div style={{ height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.06)", width: "55%" }} />
-              <div style={{ marginTop: "auto", height: "18%", borderRadius: "4px", background: work.accent }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(rafRef.current);
+      setDisplay(text);
+    };
+  }, [text]);
 
   return (
-    <div style={base}>
-      <div style={scanlines} />
-      <div style={glowAccent} />
-      {/* HUD label */}
-      <div style={{ position: "absolute", top: "0.8rem", left: "1rem", fontFamily: "var(--f-mono)", fontSize: "0.5rem", letterSpacing: "0.2em", color: `${work.accent}80`, textTransform: "uppercase", zIndex: 3 }}>
-        {work.tag}
+    <Tag ref={ref} className={className}>
+      {display}
+    </Tag>
+  );
+}
+
+/* ──────────────────────────────────────────
+   ANIMATED COUNTER
+────────────────────────────────────────── */
+function useCountUp(target: number, active: boolean, duration = 1400) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.floor(eased * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setVal(target);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, target, duration]);
+  return val;
+}
+
+function StatCard({ stat }: { stat: (typeof GOBT_STATS)[number] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setActive(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const val = useCountUp(stat.val, active);
+  return (
+    <div className="stat-card" ref={ref}>
+      <div className="stat-number">
+        {val}
+        <span className="stat-sup">{stat.sup}</span>
       </div>
-      {/* Corner marks */}
-      <div style={{ position: "absolute", top: "0.6rem", right: "0.6rem", width: "10px", height: "10px", borderTop: `1.5px solid ${work.accent}60`, borderRight: `1.5px solid ${work.accent}60`, zIndex: 3 }} />
-      <div style={{ position: "absolute", bottom: "0.6rem", left: "0.6rem", width: "10px", height: "10px", borderBottom: `1.5px solid ${work.accent}60`, borderLeft: `1.5px solid ${work.accent}60`, zIndex: 3 }} />
-      <div
-        style={{
-          width: "100%",
-          borderRadius: "8px",
-          background: `linear-gradient(180deg, ${work.accent}08 0%, rgba(0,0,0,0.3) 100%)`,
-          border: `1px solid ${work.accent}30`,
-          overflow: "hidden",
-          position: "relative",
-          zIndex: 3,
-          boxShadow: `0 4px 40px ${work.accent}15`,
-        }}
-      >
-        {/* Browser bar */}
-        <div style={{ padding: "7px 10px", background: `${work.accent}12`, display: "flex", alignItems: "center", gap: "5px", borderBottom: `1px solid ${work.accent}20` }}>
-          {["#ff5f57", "#febc2e", "#28c840"].map((c, i) => (
-            <div key={i} style={{ width: "7px", height: "7px", borderRadius: "50%", background: c, opacity: 0.8 }} />
-          ))}
-          <div style={{ flex: 1, height: "12px", borderRadius: "3px", background: "rgba(255,255,255,0.06)", marginLeft: "5px" }} />
-          <div style={{ width: "28px", height: "12px", borderRadius: "3px", background: `${work.accent}30` }} />
-        </div>
-        {/* Content */}
-        <div style={{ padding: "1.2rem", display: "flex", flexDirection: "column" as const, gap: "9px" }}>
-          <div style={{ height: "9px", borderRadius: "3px", background: work.accent, width: "38%" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
-            {[1, 2, 3].map((j) => (
-              <div key={j} style={{ height: "52px", borderRadius: "6px", background: `${work.accent}${j === 1 ? "45" : "18"}` }} />
-            ))}
-          </div>
-          <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.09)", width: "82%" }} />
-          <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.05)", width: "62%" }} />
-          <div style={{ display: "flex", gap: "7px", marginTop: "4px" }}>
-            <div style={{ height: "26px", borderRadius: "20px", background: work.accent, width: "85px" }} />
-            <div style={{ height: "26px", borderRadius: "20px", background: "rgba(255,255,255,0.04)", border: `1px solid ${work.accent}30`, width: "70px" }} />
-          </div>
-        </div>
-      </div>
+      <div className="stat-label">{stat.label}</div>
     </div>
   );
 }
@@ -737,62 +747,50 @@ function ContactForm() {
 
   if (sent) {
     return (
-      <div style={{ padding: "3rem 2.2rem", background: "var(--surface)", border: "1px solid rgba(255,106,43,0.2)", borderRadius: "16px" }}>
-        <div
-          style={{
-            fontFamily: "var(--f-display)",
-            fontSize: "clamp(2.5rem, 5vw, 4rem)",
-            fontWeight: 800,
-            letterSpacing: "-0.04em",
-            lineHeight: 0.92,
-            background: "linear-gradient(135deg, var(--orange) 0%, var(--accent2) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            marginBottom: "1.2rem",
-          }}
-        >
-          Message<br />received.
-        </div>
-        <p style={{ fontSize: "1rem", color: "var(--fg2)", lineHeight: 1.8, fontWeight: 300 }}>
-          We respond within 24 hours. For faster response, reach us on WhatsApp.
+      <div>
+        <div className="contact-success-title">Message received.</div>
+        <p className="contact-success-body">
+          We respond within 24 hours. For a faster response, reach us directly on WhatsApp.
         </p>
       </div>
     );
   }
 
+  const field = (label: string, key: keyof typeof form, type: string, placeholder: string) => (
+    <div className="form-field">
+      <label className="form-label" htmlFor={`f-${key}`}>{label}</label>
+      <input
+        id={`f-${key}`}
+        className="form-input"
+        type={type}
+        placeholder={placeholder}
+        value={form[key]}
+        onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
+      />
+    </div>
+  );
+
   return (
     <div className="contact-form">
-      {[
-        ["Full Name", "name", "text", "Your full name"],
-        ["Email Address", "email", "email", "hello@yourcompany.com"],
-        ["Company (Optional)", "company", "text", "Company name"],
-      ].map(([label, key, type, placeholder]) => (
-        <input
-          key={key}
-          id={`f-${key}`}
-          className="form-input"
-          type={type}
-          aria-label={label}
-          placeholder={placeholder}
-          value={(form as Record<string, string>)[key]}
-          onChange={(e) =>
-            setForm((p) => ({ ...p, [key]: e.target.value }))
-          }
+      <div className="form-row">
+        {field("Full Name", "name", "text", "Your full name")}
+        {field("Email Address", "email", "email", "hello@yourcompany.com")}
+      </div>
+      {field("Company (Optional)", "company", "text", "Company name")}
+      <div className="form-field">
+        <label className="form-label" htmlFor="f-message">Project Brief</label>
+        <textarea
+          id="f-message"
+          className="form-textarea"
+          rows={5}
+          placeholder="Tell us about your project, goals and timeline..."
+          value={form.message}
+          onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
         />
-      ))}
-      <textarea
-        id="f-message"
-        className="form-textarea"
-        rows={5}
-        aria-label="Project Brief"
-        placeholder="Tell us about your project, goals and timeline..."
-        value={form.message}
-        onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
-      />
+      </div>
       <button
-        className="btn-primary"
-        style={{ marginTop: "-1px", width: "100%", justifyContent: "center", borderRadius: 0 }}
+        className="btn btn-gold"
+        style={{ width: "100%" }}
         disabled={loading}
         onClick={async () => {
           if (form.name && form.email && form.message) {
@@ -801,7 +799,7 @@ function ContactForm() {
               const res = await fetch("/api/contact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form)
+                body: JSON.stringify(form),
               });
               if (res.ok) setSent(true);
             } catch (err) {
@@ -813,220 +811,138 @@ function ContactForm() {
         }}
       >
         <span>{loading ? "Sending..." : "Send Message"}</span>
-        <span style={{ fontSize: "0.9rem" }}>→</span>
       </button>
     </div>
   );
 }
 
 /* ──────────────────────────────────────────
-   TRANSFORM STAGE — 8 uneven spiral lines fan in from the left edge,
-   each with its own curl, radius and length, converging on a plain
-   "DIGITALISATION" box at different, uneven angles (>100° spread);
-   a traveling flare rides each spiral on its own independent timing.
-   Past the box, everything straightens into a single clean 180° line
-   flowing out to the right edge.
+   SCOPE ESTIMATOR
 ────────────────────────────────────────── */
-function TransformStage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
-  const boxCenter = useRef({ x: 0, y: 0 });
+function ScopeEstimator({ onQuote }: { onQuote: () => void }) {
+  const [type, setType] = useState<EstimateType>("Website");
+  const [scopeIdx, setScopeIdx] = useState(1);
+  const scope = ESTIMATE_SCOPES[scopeIdx];
 
-  /* Each spiral is generated once (stable per mount) with its own
-     random-but-fixed shape so every one of the 8 looks genuinely
-     different, not 8 copies offset by y — and its own flare speed
-     and phase offset so the highlights never move in lockstep. */
-  type Spiral = {
-    startY: number;
-    approachAngle: number; /* radians, angle of final approach into the box — uneven per spiral */
-    curl: number; /* how many extra turns the spiral takes before straightening in */
-    curlRadius: number; /* how wide the curl loops out */
-    bulge: number; /* vertical bow of the initial run-in from the edge */
-    flareSpeed: number;
-    flarePhase: number;
-    hue: number; /* slight per-spiral color variance so they don't read as identical */
-  };
-  const spirals = useRef<Spiral[]>(
-    Array.from({ length: 8 }, (_, i) => {
-      const t = (i + 0.5) / 8;
-      return {
-        startY: 0.5 + t, /* placeholder, resolved against actual band height at draw time */
-        approachAngle: (-70 + Math.random() * 150) * (Math.PI / 180), /* uneven, >100deg spread across the set */
-        curl: 0.6 + Math.random() * 1.8,
-        curlRadius: 14 + Math.random() * 30,
-        bulge: (Math.random() - 0.5) * 60,
-        flareSpeed: 0.00045 + Math.random() * 0.0009,
-        flarePhase: Math.random(),
-        hue: Math.random(),
-      };
-    })
+  return (
+    <div className="estimator glass-panel">
+      <div className="estimator-controls">
+        <div>
+          <label className="estimator-group-label">What are you building?</label>
+          <div className="estimator-options">
+            {ESTIMATE_TYPES.map((t) => (
+              <button
+                key={t}
+                className={`estimator-pill${type === t ? " active" : ""}`}
+                onClick={() => setType(t)}
+                type="button"
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="estimator-group-label">How complex is the scope?</label>
+          <input
+            type="range"
+            min={0}
+            max={2}
+            step={1}
+            value={scopeIdx}
+            onChange={(e) => setScopeIdx(Number(e.target.value))}
+            className="estimator-slider"
+            aria-label="Scope complexity"
+          />
+          <div className="estimator-slider-labels">
+            {ESTIMATE_SCOPES.map((s) => (
+              <span key={s}>{s}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="estimator-result">
+        <div className="estimator-result-row">
+          <span className="estimator-result-label">Product</span>
+          <span className="estimator-result-value">
+            <span className="accent">{type}</span> · {scope}
+          </span>
+        </div>
+        <div className="estimator-result-row">
+          <span className="estimator-result-label">Estimated Timeline</span>
+          <span className="estimator-result-value">{ESTIMATE_TIMELINES[type][scope]}</span>
+        </div>
+        <div className="estimator-result-row">
+          <span className="estimator-result-label">Team Involved</span>
+          <span className="estimator-result-value">{ESTIMATE_TEAM[scope]}</span>
+        </div>
+        <button className="btn btn-primary estimator-cta" onClick={onQuote} type="button">
+          <span>Get a custom quote</span>
+        </button>
+      </div>
+    </div>
   );
+}
+
+/* ──────────────────────────────────────────
+   PROCESS — scroll-hijacked horizontal pass: a tall wrapper holds a
+   viewport-pinned sticky panel showing exactly one card at a time.
+   Its scroll range is divided into N equal slots (N = step count);
+   whichever slot the scroll position currently sits in becomes the
+   active, centred card — snapping discretely (CSS transition does
+   the easing) rather than following raw scroll pixel-for-pixel, so
+   a card is always either fully in frame or fully out, never half
+   visible mid-scroll.
+────────────────────────────────────────── */
+function ProcessSticky() {
+  const [active, setActive] = useState(0);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let raf = 0;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const onScroll = () => {
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
 
-    const resize = () => {
-      const wrap = wrapRef.current;
-      if (!wrap || !canvas) return;
-      const rect = wrap.getBoundingClientRect();
-      canvas.width = rect.width * 2;
-      canvas.height = rect.height * 2;
-      canvas.style.width = rect.width + "px";
-      canvas.style.height = rect.height + "px";
-    };
-    resize();
-    window.addEventListener("resize", resize);
+      const rect = wrapper.getBoundingClientRect();
+      const scrollable = wrapper.offsetHeight - window.innerHeight;
+      if (scrollable <= 0) return;
 
-    const measure = () => {
-      const wrap = wrapRef.current;
-      const box = boxRef.current;
-      if (!wrap || !box) return;
-      const rect = wrap.getBoundingClientRect();
-      const br = box.getBoundingClientRect();
-      boxCenter.current = { x: br.left - rect.left + br.width / 2, y: br.top - rect.top + br.height / 2 };
+      const raw = -rect.top / scrollable;
+      const p = Math.min(0.999, Math.max(0, raw));
+
+      const idx = Math.floor(p * PROCESS_STEPS.length);
+      setActive(Math.min(PROCESS_STEPS.length - 1, Math.max(0, idx)));
     };
 
-    /* Builds the same wobbling spiral path twice — once to stroke it,
-       once (in the flare pass) to find the point at parameter `at` —
-       so the traveling highlight always sits exactly on the visible line. */
-    const spiralPoint = (s: Spiral, cc: { x: number; y: number }, startY: number, at: number) => {
-      const approachLen = 90; /* short straight final run into the box, uniform-ish direction */
-      const bodyEnd = { x: cc.x - Math.cos(s.approachAngle) * approachLen, y: cc.y - Math.sin(s.approachAngle) * approachLen };
-
-      if (at > 0.82) {
-        /* final approach segment: straight, converging on the box */
-        const tt = (at - 0.82) / 0.18;
-        return { x: bodyEnd.x + (cc.x - bodyEnd.x) * tt, y: bodyEnd.y + (cc.y - bodyEnd.y) * tt };
-      }
-
-      const tt = at / 0.82;
-      const turns = s.curl * Math.PI * 2;
-      const angle = turns * tt;
-      const radius = s.curlRadius * (1 - tt * 0.85);
-      const baseX = 0 + (bodyEnd.x - s.curlRadius) * tt;
-      const baseY = startY + s.bulge * Math.sin(tt * Math.PI);
-      return {
-        x: baseX + Math.cos(angle) * radius * tt,
-        y: baseY + Math.sin(angle) * radius * tt,
-      };
-    };
-
-    const draw = () => {
-      raf = requestAnimationFrame(draw);
-      if (!canvas) return;
-      measure();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.scale(2, 2);
-
-      const cc = boxCenter.current;
-      const canvasW = canvas.width / 2;
-      const rect = wrapRef.current?.getBoundingClientRect();
-      const h = rect?.height ?? 300;
-      const now = Date.now();
-
-      if (cc.x > 0) {
-        /* soft hub glow anchoring the box */
-        const glowR = 58;
-        const hub = ctx.createRadialGradient(cc.x, cc.y, 0, cc.x, cc.y, glowR);
-        hub.addColorStop(0, "rgba(254, 210, 110, 0.22)");
-        hub.addColorStop(1, "rgba(254, 210, 110, 0)");
-        ctx.fillStyle = hub;
-        ctx.beginPath();
-        ctx.arc(cc.x, cc.y, glowR, 0, Math.PI * 2);
-        ctx.fill();
-
-        /* 8 uneven spirals fanning in from the left */
-        const bandTop = h * 0.22;
-        const bandH = h * 0.56;
-        spirals.current.forEach((s, i) => {
-          const startY = bandTop + ((i + 0.5) / 8) * bandH;
-          const steps = 64;
-          ctx.beginPath();
-          for (let k = 0; k <= steps; k++) {
-            const p = spiralPoint(s, cc, startY, k / steps);
-            if (k === 0) ctx.moveTo(p.x, p.y);
-            else ctx.lineTo(p.x, p.y);
-          }
-          const r = Math.round(200 - s.hue * 40);
-          const g = Math.round(140 + s.hue * 30);
-          const b = Math.round(40 + s.hue * 50);
-          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.4)`;
-          ctx.lineWidth = 1.2;
-          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.45)`;
-          ctx.shadowBlur = 3.5;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-
-          /* traveling flare — own speed + phase per spiral */
-          const at = (now * s.flareSpeed + s.flarePhase) % 1;
-          const fp = spiralPoint(s, cc, startY, at);
-          const fade = at > 0.9 ? (1 - at) / 0.1 : 1;
-          ctx.beginPath();
-          ctx.arc(fp.x, fp.y, 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 235, 190, ${0.85 * fade})`;
-          ctx.shadowColor = "rgba(254, 210, 110, 0.8)";
-          ctx.shadowBlur = 6;
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        });
-
-        /* single clean line out the right edge, uniform 180° */
-        {
-          const endX = canvasW;
-          ctx.beginPath();
-          ctx.moveTo(cc.x, cc.y);
-          ctx.lineTo(endX, cc.y);
-          ctx.strokeStyle = "rgba(254, 210, 110, 0.55)";
-          ctx.lineWidth = 1.8;
-          ctx.shadowColor = "rgba(254, 210, 110, 0.5)";
-          ctx.shadowBlur = 8;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-
-          const travel = (now * 0.0006) % 1;
-          const hx = cc.x + (endX - cc.x) * travel;
-          ctx.beginPath();
-          ctx.arc(hx, cc.y, 2.4, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255, 240, 200, 0.85)";
-          ctx.fill();
-        }
-      }
-
-      ctx.restore();
-    };
-    draw();
-
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    onScroll();
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, []);
 
   return (
-    <div className="tf-stage" aria-label="8 uneven signal spirals converging into a digitalisation process">
-      <div className="tf-divider" aria-hidden="true" />
-      <div className="tf-storyboard" ref={wrapRef}>
-        <canvas ref={canvasRef} className="tf-canvas" aria-hidden="true" />
-        <div className="tf-cart">
-          <div className="tf-box" ref={boxRef}>
-            <div className="tf-box-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="5" cy="12" r="2" stroke="currentColor" strokeWidth="1.6" />
-                <circle cx="19" cy="6" r="2" stroke="currentColor" strokeWidth="1.6" />
-                <circle cx="19" cy="18" r="2" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M7 11.2L17 6.8M7 12.8L17 17.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className="tf-box-text">
-              <span className="tf-box-eyebrow">Process</span>
-              <span className="tf-box-title">Digitalisation</span>
-            </div>
+    <div className="process-scroller" ref={wrapperRef}>
+      <div className="process-scroller-sticky">
+        <div className="process-carousel">
+          <div
+            className="process-carousel-track"
+            style={{ transform: `translateX(-${active * 100}%)` }}
+          >
+            {PROCESS_STEPS.map((step, i) => (
+              <div className="process-carousel-slot" key={step.title}>
+                <div className={`process-carousel-step glass-panel${active === i ? " active" : ""}`}>
+                  <span className="process-carousel-num">{String(i + 1).padStart(2, "0")}</span>
+                  <div className="process-carousel-icon">{step.icon}</div>
+                  <h3 className="process-step-title">{step.title}</h3>
+                  <p className="process-step-desc">{step.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -1035,11 +951,126 @@ function TransformStage() {
 }
 
 /* ──────────────────────────────────────────
+   WHY GOBT COMPARISON
+────────────────────────────────────────── */
+function CheckIcon({ yes }: { yes: boolean }) {
+  if (yes) {
+    return (
+      <svg className="compare-icon yes" viewBox="0 0 24 24" fill="none">
+        <path d="M4 12.5l5 5L20 6.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="compare-icon no" viewBox="0 0 24 24" fill="none">
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WhyGOBT() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="compare-table glass-panel">
+      <div className="compare-row">
+        <div className="compare-cell feature">Feature</div>
+        <div className="compare-cell">Typical Agency</div>
+        <div className="compare-cell">GOBT</div>
+      </div>
+      {COMPARE_ROWS.map((row) => (
+        <div className="compare-row" key={row.feature}>
+          <div className="compare-cell feature">{row.feature}</div>
+          <div className="compare-cell">
+            <CheckIcon yes={row.agency} />
+          </div>
+          <div className="compare-cell gobt">
+            <CheckIcon yes={row.gobt} />
+          </div>
+        </div>
+      ))}
+      <div className={`compare-hidden-rows${open ? " open" : ""}`}>
+        <div className="compare-hidden-rows-inner">
+          {COMPARE_ROWS_MORE.map((row) => (
+            <div className="compare-row" key={row.feature}>
+              <div className="compare-cell feature">{row.feature}</div>
+              <div className="compare-cell">
+                <CheckIcon yes={row.agency} />
+              </div>
+              <div className="compare-cell gobt">
+                <CheckIcon yes={row.gobt} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="compare-toggle">
+        <button onClick={() => setOpen((o) => !o)} type="button">
+          {open ? "Show less" : "Show all features"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────
+   WORK CARD
+────────────────────────────────────────── */
+function WorkCard({ work }: { work: (typeof WORKS)[number] }) {
+  return (
+    <div className="work-card">
+      <div className="browser-chrome">
+        <div className="browser-traffic-lights">
+          <span className="tl tl-red" /><span className="tl tl-yellow" /><span className="tl tl-green" />
+        </div>
+        <div className="browser-url-bar">
+          <span className="browser-lock">🔒</span>
+          <span className="browser-url-text">{work.live || "gobt.in"}</span>
+        </div>
+      </div>
+      <div className="work-card-media browser-viewport">
+        {work.image ? (
+          <img src={work.image} alt={work.title} loading="lazy" className="browser-screenshot" />
+        ) : (
+          <div
+            className="work-card-media-placeholder"
+            style={{ color: work.accent }}
+          >
+            {work.title.slice(0, 2).toUpperCase()}
+          </div>
+        )}
+        <div className="browser-overlay" />
+        {work.soon && <div className="work-card-soon">Coming Soon</div>}
+      </div>
+      <div className="work-card-body">
+        <span className="work-card-tag">{work.tag}</span>
+        <span className="work-card-title">{work.title}</span>
+        <p className="work-card-desc">{work.desc}</p>
+        <div className="work-card-tech">
+          {work.tech.map((t) => (
+            <span key={t}>{t}</span>
+          ))}
+        </div>
+        {work.live && (
+          <a
+            className="work-card-link"
+            href={`https://${work.live}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Visit site <span className="btn-arrow">→</span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+/* ──────────────────────────────────────────
    BUG SCAN LAPTOP
    A laptop mockup whose screen is a canvas: hovering it sweeps a
    circular "AI lens" that inverts to a light scan view and reveals
-   hidden virus/threat glyphs wherever the lens passes over them —
-   ported from a magnifying-glass vulnerability-scan demo.
+   hidden virus/threat glyphs wherever the lens passes over them.
 ────────────────────────────────────────── */
 function BugScanLaptop() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -1080,8 +1111,6 @@ function BugScanLaptop() {
       canvas.style.height = H + "px";
     };
 
-    /* Unmistakably a bug: oval body + round head, curved antennae,
-       three legs splayed off each side — not an abstract starburst */
     const drawVirus = (cx: number, cy: number, size: number, color: string) => {
       ctx.save();
       ctx.strokeStyle = color;
@@ -1094,7 +1123,6 @@ function BugScanLaptop() {
       const headR = size * 0.14;
       const headCy = cy - bodyRy - headR * 0.6;
 
-      // legs — 3 per side, splayed from the body's midline
       for (let i = -1; i <= 1; i++) {
         const legY = cy + i * bodyRy * 0.55;
         const spread = size * 0.34;
@@ -1106,7 +1134,6 @@ function BugScanLaptop() {
         });
       }
 
-      // antennae
       ctx.beginPath();
       ctx.moveTo(cx - headR * 0.5, headCy - headR * 0.6);
       ctx.quadraticCurveTo(cx - size * 0.22, headCy - size * 0.32, cx - size * 0.28, headCy - size * 0.42);
@@ -1116,7 +1143,6 @@ function BugScanLaptop() {
       ctx.quadraticCurveTo(cx + size * 0.22, headCy - size * 0.32, cx + size * 0.28, headCy - size * 0.42);
       ctx.stroke();
 
-      // body (oval) + spine line
       ctx.beginPath();
       ctx.ellipse(cx, cy, bodyRx, bodyRy, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -1127,7 +1153,6 @@ function BugScanLaptop() {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // head
       ctx.beginPath();
       ctx.arc(cx, headCy, headR, 0, Math.PI * 2);
       ctx.fillStyle = color;
@@ -1297,12 +1322,9 @@ function BugScanLaptop() {
 
 /* ──────────────────────────────────────────
    VR GALLERY
-   Fullscreen overlay entered via "Switch to VR" on a carousel: a real
-   Three.js scene, cards laid out as a gently curved row in 3D space
-   floating in front of the camera. Hovering the left/right edges or
-   either bottom corner scrubs the row continuously toward that end
-   (clamped, eases to a stop at the last/first card); the top of the
-   screen is inert. A floating HTML "Close VR" button exits.
+   Fullscreen overlay: work cards laid out as a gently curved row in
+   3D space. Hovering the left/right edges or either bottom corner
+   scrubs the row continuously toward that end.
 ────────────────────────────────────────── */
 function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: () => void }) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -1311,10 +1333,6 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    /* Corner-hover auto-scroll happens inside the VR view itself, so
-       normal page scroll must be fully blocked while it's open — not
-       just visually hidden, or a trackpad/wheel event can still creep
-       the page behind the overlay. */
     const blockScroll = (e: Event) => e.preventDefault();
     const prevOverflow = document.body.style.overflow;
     const prevPosition = document.body.style.position;
@@ -1371,8 +1389,6 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
     rim2.position.set(5, -1, -4);
     scene.add(rim2);
 
-    /* soft reflective floor — grid fading into the fog, grounds the
-       row of cards in a "space" instead of floating on pure black */
     const floorGeo = new THREE.PlaneGeometry(80, 80);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x0a0806,
@@ -1390,7 +1406,6 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
     (grid.material as THREE.Material).opacity = 0.22;
     scene.add(grid);
 
-    /* slow-drifting dust motes for depth/atmosphere */
     const DUST_COUNT = 140;
     const dustGeo = new THREE.BufferGeometry();
     const dustPos = new Float32Array(DUST_COUNT * 3);
@@ -1410,9 +1425,6 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
     const dust = new THREE.Points(dustGeo, dustMat);
     scene.add(dust);
 
-    /* each card's face is drawn onto an offscreen canvas and used as
-       a texture — same visual language (title, accent bg) as the
-       flat DOM cards, just rendered into 3D space */
     const CARD_W = 3.1;
     const CARD_H = category === "App" ? 2.4 : 1.95;
     const GAP = 1.15;
@@ -1423,14 +1435,12 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
       c.width = cw;
       c.height = ch;
       const cctx = c.getContext("2d")!;
-      cctx.fillStyle = work.bg || "#141414";
+      cctx.fillStyle = work.accent ? `${work.accent}22` : "#141414";
       cctx.fillRect(0, 0, cw, ch);
-      cctx.fillStyle = `${work.accent}22`;
-      cctx.fillRect(0, 0, cw, 6);
 
       const draw2D = (img: HTMLImageElement | null) => {
         cctx.clearRect(0, 0, cw, ch);
-        cctx.fillStyle = work.bg || "#141414";
+        cctx.fillStyle = "#141414";
         cctx.fillRect(0, 0, cw, ch);
         if (img) {
           const scale = Math.max(cw / img.width, ch / img.height);
@@ -1451,11 +1461,11 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
           cctx.globalAlpha = 1;
         }
         cctx.fillStyle = "rgba(255,255,255,0.94)";
-        cctx.font = "700 34px var(--f-display), sans-serif";
+        cctx.font = "700 34px Arial, sans-serif";
         cctx.textBaseline = "bottom";
         cctx.fillText(work.title, 28, ch - 26);
         cctx.fillStyle = work.accent;
-        cctx.font = "600 15px var(--f-mono), monospace";
+        cctx.font = "600 15px Arial, sans-serif";
         cctx.fillText(work.tag || work.category, 28, ch - 2);
         tex.needsUpdate = true;
       };
@@ -1491,16 +1501,11 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
 
     const totalSpan = Math.max(0, (cards.length - 1) * (CARD_W + GAP));
 
-    /* scroll offset along the row — 0 = first card centered,
-       totalSpan = last card centered; camera-relative curve applied
-       per-card each frame based on distance from current offset */
     let offset = 0;
     let velocity = 0;
 
-    /* corner/edge hover zones drive a target velocity; releasing
-       decays it back to 0 instead of stopping instantly */
     const HOVER_SPEED = 0.11;
-    let hoverDir = 0; /* -1 = scroll toward first card, 1 = toward last */
+    let hoverDir = 0;
 
     const zones = Array.from(mount.parentElement?.querySelectorAll<HTMLElement>(".vr-zone") ?? []);
     const leftZones = zones.filter((z) => z.classList.contains("vr-zone-left") || z.classList.contains("vr-zone-bl"));
@@ -1534,9 +1539,6 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
       cards.forEach((mesh) => {
         const localX = mesh.userData.baseX - offset;
         mesh.position.x = localX;
-        /* gentle curve: cards further from center recede in z and
-           yaw slightly, so the row reads as a shallow VR arc, not a
-           flat strip */
         const t = localX / 6;
         mesh.position.z = -Math.abs(t) * 0.9;
         mesh.rotation.y = -t * 0.22;
@@ -1544,15 +1546,11 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
         const s = dist < 4 ? 1 : Math.max(0.72, 1 - (dist - 4) * 0.05);
         mesh.scale.setScalar(s);
         const mat = mesh.material as THREE.MeshStandardMaterial;
-        /* the centered card breathes with a slow glow pulse so it
-           reads as the "focused" one in the row */
         const focus = Math.max(0, 1 - dist / 2);
         const pulse = 0.5 + 0.5 * Math.sin(now * 1.6);
         mat.emissiveIntensity = 0.05 + focus * (0.12 + pulse * 0.06);
       });
 
-      /* slow parallax drift on the dust field, plus a gentle
-         camera sway so the scene never feels perfectly static */
       dust.rotation.y = now * 0.012;
       camera.position.x = Math.sin(now * 0.15) * 0.15;
       camera.position.y = 0.3 + Math.cos(now * 0.12) * 0.08;
@@ -1599,15 +1597,11 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
   return (
     <div className="vr-overlay" role="dialog" aria-modal="true" aria-label={`VR view — ${category === "Web" ? "Web Platforms" : "Mobile Apps"}`}>
       <div className="vr-scene-mount" ref={mountRef} aria-hidden="true" />
-
-      {/* corner scroll zones — top edge stays inert on purpose */}
       <div className="vr-zone vr-zone-left" />
       <div className="vr-zone vr-zone-right" />
       <div className="vr-zone vr-zone-bl" />
       <div className="vr-zone vr-zone-br" />
-
       <div className="vr-label">{category === "Web" ? "Web Platforms" : "Mobile Apps"} · VR</div>
-
       <button className="vr-close-btn" onClick={onClose} aria-label="Close VR view">
         <span>✕</span> Close VR
       </button>
@@ -1619,318 +1613,124 @@ function VRGallery({ category, onClose }: { category: "Web" | "App"; onClose: ()
    MAIN APP
 ────────────────────────────────────────── */
 export default function GOBTApp() {
-  const worksTrackRef = useRef<HTMLDivElement>(null);
-
   const [menuOpen, setMenuOpen] = useState(false);
-  const [filter, setFilter] = useState("All");
-  const [activeJob, setActiveJob] = useState<typeof JOBS[0] | null>(null);
+  const [filter, setFilter] = useState<"All" | "Web" | "App">("All");
+  const [activeJob, setActiveJob] = useState<(typeof JOBS)[0] | null>(null);
+  const [activeNav, setActiveNav] = useState("services");
   const [vrCategory, setVrCategory] = useState<"Web" | "App" | null>(null);
-  const isMobile = useRef(false);
+  const [loading, setLoading] = useState(true);
+  const lenisRef = useRef<Lenis | null>(null);
 
-  /* Smooth typewriter — loops continuously through the word list */
-  const { display: twText } = useTypewriter(
-    TYPEWRITER_WORDS,
-    28,
-    2600,
-    14
-  );
+  useScrollReveal();
 
-  const filteredWorks =
-    filter === "All" ? WORKS : WORKS.filter((w) => w.category === filter);
+  /* Preloader — hide once the page has settled, with a hard cap so a
+     slow asset can never leave it stuck on screen */
+  useEffect(() => {
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 1200));
+    const ready =
+      document.readyState === "complete"
+        ? Promise.resolve()
+        : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
 
+    Promise.all([minDelay, ready]).then(() => setLoading(false));
+
+    const hardCap = setTimeout(() => setLoading(false), 4000);
+    return () => clearTimeout(hardCap);
+  }, []);
 
   useEffect(() => {
-    if (worksTrackRef.current) {
-      worksTrackRef.current.scrollTo({ left: 0, behavior: "smooth" });
-    }
-  }, [filter]);
+    document.body.style.overflow = loading ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [loading]);
 
-  /* Re-initialize MailtoUI when dynamic content changes (like modals) */
+  /* Lenis smooth scroll */
   useEffect(() => {
-    // @ts-ignore
-    if (typeof window !== "undefined" && window.mailtouiApp) {
-      // @ts-ignore
-      window.mailtouiApp.run();
-    }
-  }, [activeJob, menuOpen]);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const lenis = new Lenis({
+      duration: 1.1,
+      easing: (t: number) => Math.min(1, 1 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+    lenisRef.current = lenis;
+
+    let raf = 0;
+    const loop = (time: number) => {
+      lenis.raf(time);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      lenis.destroy();
+      lenisRef.current = null;
+    };
+  }, []);
+
+  /* Pause Lenis while a modal/overlay traps scroll, so it doesn't
+     fight the manual overflow lock below */
+  useEffect(() => {
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+    if (menuOpen || activeJob || vrCategory) lenis.stop();
+    else lenis.start();
+  }, [menuOpen, activeJob, vrCategory]);
+
+  const filteredWorks = filter === "All" ? WORKS : WORKS.filter((w) => w.category === filter);
 
   /* Lock body scroll when menu or modal is open */
   useEffect(() => {
     if (menuOpen || activeJob) {
       document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
     };
   }, [menuOpen, activeJob]);
 
-  /* Auto-scroll timer removed - replaced by marquee CSS */
-
-  const goto = (id: string) => {
-    setMenuOpen(false);
-    setTimeout(
-      () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }),
-      80
-    );
-  };
-
-
+  /* Nav scroll state + scroll-spy */
   useEffect(() => {
-    isMobile.current = window.innerWidth < 768;
+    const onScroll = () => {
+      const nav = document.getElementById("nav");
+      if (nav) nav.classList.toggle("scrolled", window.scrollY > 40);
 
-    /* #preloader is a fixed, fully-opaque, z-index:100000 overlay that
-       covers the whole page until GSAP's timeline explicitly hides it.
-       If the CDN scripts are slow/blocked or anything in that chain
-       fails, the site is stuck behind a black screen forever — so every
-       exit path (including a hard timeout) must be able to remove it. */
-    let preloaderHidden = false;
-    const hidePreloader = () => {
-      if (preloaderHidden) return;
-      preloaderHidden = true;
-      const el = document.getElementById("preloader");
-      if (el) el.style.cssText += ";opacity:0;pointer-events:none";
-    };
-    /* last-resort fallback: if GSAP never finishes the reveal chain for
-       any reason, force everything visible directly via inline style so
-       the page can't get stuck hidden — normal loads never reach this,
-       since runPreloader/runHeroEntrance clear this timer once they run */
-    const forceRevealAll = () => {
-      hidePreloader();
-      document
-        .querySelectorAll(".r-up,.r-left,.r-right,.r-fade,.r-scale,.hero-eyebrow,.hero-h1-inner,.hero-bottom")
-        .forEach((el) => {
-          (el as HTMLElement).style.cssText += ";opacity:1;transform:none";
-        });
-    };
-    const safetyTimer = setTimeout(forceRevealAll, 4500);
-
-    const loadScript = (src: string) =>
-      new Promise<void>((resolve, reject) => {
-        const existing = document.querySelector(`script[src="${src}"]`);
-        if (existing) {
-          const checkReady = setInterval(() => {
-            const w = window as any;
-            if (src.includes("ScrollTrigger") && w.ScrollTrigger) {
-              clearInterval(checkReady);
-              resolve();
-            } else if (!src.includes("ScrollTrigger") && src.includes("gsap") && w.gsap) {
-              clearInterval(checkReady);
-              resolve();
-            } else if (src.includes("three") && w.THREE) {
-              clearInterval(checkReady);
-              resolve();
-            } else if (!src.includes("gsap") && !src.includes("three")) {
-              clearInterval(checkReady);
-              resolve();
-            }
-          }, 50);
-          setTimeout(() => { clearInterval(checkReady); resolve(); }, 3000);
-          return;
-        }
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error(`Failed to load ${src}`));
-        document.head.appendChild(s);
+      const offsets = NAV_ITEMS.map((item) => {
+        const el = document.getElementById(item.id);
+        if (!el) return { id: item.id, top: Infinity };
+        return { id: item.id, top: Math.abs(el.getBoundingClientRect().top - 120) };
       });
-
-    (async () => {
-      try {
-        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js");
-        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js");
-
-        const w = window as any;
-        const { gsap } = w;
-        const ScrollTrigger = w.ScrollTrigger;
-
-        if (!gsap || !ScrollTrigger) {
-          console.warn("GSAP or ScrollTrigger not loaded");
-          clearTimeout(safetyTimer);
-          forceRevealAll();
-          return;
-        }
-
-        gsap.registerPlugin(ScrollTrigger);
-
-        runPreloader(gsap, () => {
-          clearTimeout(safetyTimer);
-          preloaderHidden = true; /* runPreloader's own timeline already faded it out */
-          runHeroEntrance(gsap);
-          runScrollAnims(gsap, ScrollTrigger);
-          runStatsCounter(gsap, ScrollTrigger);
-          runNav();
-        });
-      } catch (err) {
-        console.error("Script loading error:", err);
-        clearTimeout(safetyTimer);
-        forceRevealAll();
-      }
-    })();
-
-    return () => clearTimeout(safetyTimer);
+      offsets.sort((a, b) => a.top - b.top);
+      if (offsets[0]) setActiveNav(offsets[0].id);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ═════════════════════════════════════
-     PRELOADER — GOBT text animation
-     ═════════════════════════════════════ */
-  function runPreloader(gsap: any, onDone: () => void) {
-    const tl = gsap.timeline({ onComplete: onDone });
-    tl.to("#preloader", { opacity: 0, duration: 0.5, delay: 1.3, pointerEvents: "none", ease: "power2.out" });
-  }
+  const goto = useCallback((id: string) => {
+    setMenuOpen(false);
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (lenisRef.current) lenisRef.current.scrollTo(el, { offset: -90 });
+      else el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  }, []);
 
-  /* ═════════════════════════════════════
-     HERO ENTRANCE
-     ═════════════════════════════════════ */
-  function runHeroEntrance(gsap: any) {
-    if (isMobile.current) {
-      document
-        .querySelectorAll(".hero-eyebrow, .hero-h1-inner, .hero-bottom")
-        .forEach((el) => {
-          (el as HTMLElement).style.cssText += ";opacity:1;transform:none";
-        });
-      return;
-    }
+  const scrollToTop = useCallback(() => {
+    if (lenisRef.current) lenisRef.current.scrollTo(0);
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
-    const tl = gsap.timeline({ delay: 0.15 });
-    tl.to(".hero-eyebrow", { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" })
-      .to(
-        ".hero-h1-inner",
-        { y: 0, duration: 1.3, ease: "power4.out", stagger: 0.14 },
-        "-=0.55"
-      )
-      .to(
-        ".hero-bottom",
-        { opacity: 1, y: 0, duration: 1.1, ease: "power3.out" },
-        "-=0.6"
-      );
-  }
-
-  /* ═════════════════════════════════════
-     SCROLL ANIMATIONS
-     ═════════════════════════════════════ */
-  function runScrollAnims(gsap: any, ST: any) {
-    if (isMobile.current) {
-      document
-        .querySelectorAll(".r-up,.r-left,.r-right,.r-fade,.r-scale")
-        .forEach((el) => {
-          (el as HTMLElement).style.cssText += ";opacity:1;transform:none";
-        });
-      return;
-    }
-
-    const reveal = (selector: string, from: object, extra: object = {}) => {
-      document.querySelectorAll(selector).forEach((el) => {
-        gsap.fromTo(el, from, {
-          opacity: 1, x: 0, y: 0, scale: 1,
-          duration: 0.95, ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 88%" },
-          ...extra,
-        });
-      });
-    };
-
-    reveal(".r-up", { opacity: 0, y: 50 });
-    reveal(".r-left", { opacity: 0, x: -50 });
-    reveal(".r-right", { opacity: 0, x: 50 });
-    reveal(".r-fade", { opacity: 0 });
-    reveal(".r-scale", { opacity: 0, scale: 0.92 });
-
-    document.querySelectorAll(".section-h2").forEach((el) => {
-      gsap.fromTo(el, { opacity: 0, y: 55 }, {
-        opacity: 1, y: 0, duration: 1.0, ease: "power4.out",
-        scrollTrigger: { trigger: el, start: "top 86%" },
-      });
-    });
-
-    gsap.fromTo(".contact-watermark", { x: 80, opacity: 0 }, {
-      x: 0, opacity: 1, duration: 1.2, ease: "power3.out",
-      scrollTrigger: { trigger: "#contact", start: "top 80%" },
-    });
-  }
-
-  /* ═════════════════════════════════════
-     STATS COUNTER
-     ═════════════════════════════════════ */
-  function runStatsCounter(gsap: any, ST: any) {
-    if (isMobile.current || !ST || typeof ST.create !== "function") {
-      document.querySelectorAll(".stat-val").forEach((el) => {
-        el.textContent = (el as HTMLElement).dataset.target || "0";
-      });
-      return;
-    }
-
-    const statValues = document.querySelectorAll(".stat-val");
-    if (!statValues.length) return;
-
-    gsap.fromTo(
-      ".stat-card",
-      { opacity: 0, y: 30 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: "power3.out",
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: "#stats",
-          start: "top 80%",
-        },
-      }
-    );
-
-    statValues.forEach((el) => {
-      const target = parseInt((el as HTMLElement).dataset.target || "0");
-      const obj = { val: 0 };
-      gsap.to(obj, {
-        val: target,
-        duration: 2,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: "#stats",
-          start: "top 80%",
-        },
-        onUpdate: () => {
-          el.textContent = String(Math.floor(obj.val));
-        },
-      });
-    });
-  }
-
-  /* ═════════════════════════════════════
-     NAV SCROLL STATE
-     ═════════════════════════════════════ */
-  function runNav() {
-    const nav = document.getElementById("nav");
-    if (!nav) return;
-    let lastY = window.scrollY;
-    window.addEventListener("scroll", () => {
-      const y = window.scrollY;
-      nav.classList.toggle("scrolled", y > 60);
-      if (y > lastY && y > 120) {
-        nav.classList.add("nav-hidden");
-      } else {
-        nav.classList.remove("nav-hidden");
-      }
-      lastY = y;
-    }, { passive: true });
-  }
-
-  /* ══════════════════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════════════════ */
   return (
     <>
-      {/* ── CURSOR (hidden — using normal cursor) ── */}
-      <div id="cursor-dot" />
-      <div id="cursor-outer" />
-
       {/* ── PRELOADER — crystal loader (Uiverse.io by Juanes200122) ── */}
-      <div id="preloader">
+      <div id="preloader" style={{ opacity: loading ? 1 : 0, pointerEvents: loading ? "auto" : "none" }}>
         <svg xmlns="http://www.w3.org/2000/svg" height="200" width="200" aria-hidden="true">
           <g>
             <polygon transform="rotate(45 100 100)" strokeWidth="1" stroke="#d3a410" fill="none" points="70,70 148,50 130,130 50,150" id="pl-bounce" />
@@ -1968,592 +1768,495 @@ export default function GOBTApp() {
         </svg>
       </div>
 
-      {/* ── MOBILE NAV ── */}
-      <div id="mobile-nav" className={menuOpen ? "open" : ""}>
-        <button className="mobile-close" onClick={() => setMenuOpen(false)}>✕</button>
-        {[
-          ["home", "Home"],
-          ["about", "About"],
-          ["works", "Works"],
-          ["clients", "Clients"],
-          ["testimonials", "Testimonials"],
-          ["careers", "Careers"],
-          ["contact", "Contact"],
-        ].map(([id, label]) => (
-          <a
-            key={id}
-            href="#"
-            className="mobile-link"
-            data-label={label}
-            onClick={(e) => { e.preventDefault(); goto(id); }}
-          >
-            {label}
-          </a>
-        ))}
-      </div>
+      <div className="page-canvas" aria-hidden="true" />
+      <div className="page-grid" aria-hidden="true" />
 
       {/* ── NAV ── */}
-      <nav id="nav" role="navigation" aria-label="Main navigation">
-        <a href="#" className="nav-logo" onClick={(e) => { e.preventDefault(); goto("home"); }}>
-          <img src="/logo.png" alt="GOBT" style={{ height: "60px", width: "auto" }} />
-        </a>
-        <button
-          className="nav-dots"
-          onClick={() => setMenuOpen(true)}
-          aria-label="Open menu"
-          aria-expanded={menuOpen}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+      <nav id="nav">
+        <div className="wrap nav-inner">
+          <a
+            href="#home"
+            className="nav-logo"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToTop();
+            }}
+          >
+            <img src="/logo.png" alt="GOBT" />
+          </a>
+
+          <ul className="nav-links">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.id}>
+                <a
+                  className={`nav-link${activeNav === item.id ? " active" : ""}`}
+                  href={`#${item.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goto(item.id);
+                  }}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <div className="nav-right">
+            <button
+              className={`nav-burger${menuOpen ? " open" : ""}`}
+              aria-label="Toggle menu"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
+        </div>
       </nav>
 
-      {/* ══════════════════════════════════
-          HOME
-         ══════════════════════════════════ */}
-      <section id="home" aria-label="Hero section">
-        <div className="hero-aurora" aria-hidden="true">
-          <span className="hero-aurora-blob b1" />
-          <span className="hero-aurora-blob b2" />
-          <span className="hero-aurora-blob b3" />
-          <span className="hero-aurora-blob b4" />
-        </div>
-        <div className="hero-noise" aria-hidden="true" />
-        <div className="hero-vignette" aria-hidden="true" />
-        <div className="hero-inner hero-inner-centered">
-          <div className="hero-text-col hero-text-col-centered">
-            <div className="hero-eyebrow">
-              Group of Blooming Technicians (Est. 2022)
-            </div>
-            <h1 className="hero-h1">
-              <span className="hero-h1-line">
-                <span className="hero-h1-inner">
-                  We Build{" "}
-                  <span className="hero-h1-tw orange" aria-live="polite">
-                    {twText}
-                    <span className="tw-cursor" />
-                  </span>
-                </span>
-              </span>
-            </h1>
-            <div className="hero-bottom hero-bottom-centered">
-              <p className="hero-desc">
-                Engineering studio building apps, platforms, and interfaces that convert.
-                We partner as your technical co-founders from first idea to full-scale
-                product, design, and deployment.
-              </p>
-              <div className="hero-actions">
-                <a
-                  href="https://wa.me/918972297093?text=Hi%20GOBT%2C%20I%20want%20to%20start%20a%20project"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="golden-button"
-                >
-                  <span className="golden-text">Start a Project →</span>
-                </a>
-                <a
-                  href="#"
-                  className="btn-ghost"
-                  onClick={(e) => { e.preventDefault(); goto("works"); }}
-                >
-                  <span>View Works</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <TransformStage />
-      </section>
-
-      {/* ══════════════════════════════════
-          SERVICES
-         ══════════════════════════════════ */}
-      <section className="services-section" aria-label="What we offer">
-        <div className="section-tag" style={{ marginBottom: "1.2rem" }}>What We Offer</div>
-        <h2 className="services-h2">Tech domains we work in</h2>
-        <div className="services-grid">
-          {SERVICES.map((s, i) => (
-            <div key={s.label} className="service-card">
-              <div className="service-card-icon">{SERVICE_ICONS[i % SERVICE_ICONS.length]}</div>
-              <div className="service-card-title">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          BUG DETECTION
-         ══════════════════════════════════ */}
-      <section className="bugscan-section" aria-label="AI-enabled threat detection">
-        <div className="bugscan-grid">
-          <div className="bugscan-copy">
-            <div className="section-tag" style={{ marginBottom: "1.5rem" }}>GOBT Security Platform</div>
-            <h2 className="section-h2">
-              AI-enabled
-              <br />
-              <span className="accent">Threat Detection.</span>
-            </h2>
-            <p className="bugscan-body">
-              Our in-house AI system, &ldquo;CuriOS&rdquo;, scans your software
-              for vulnerabilities and ranks every threat by risk before it
-              becomes a breach.
-            </p>
-          </div>
-          <div className="bugscan-visual">
-            <div className="bugscan-label">Hover the screen to scan</div>
-            <BugScanLaptop />
-            <p className="bugscan-callout">
-              &ldquo;Do not let your hard-earned business revenue be plundered
-              by cyber pirates. Subscribe to GOBT today to fortify your
-              digital world.&rdquo;
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          ABOUT
-         ══════════════════════════════════ */}
-      <section id="about" aria-label="About GOBT">
-        <div className="about-grid">
-          <div className="about-headline-block r-left">
-            <div className="section-tag" style={{ marginBottom: "1.5rem" }}>About GOBT</div>
-            <h2 className="section-h2">
-              Not just a<br />
-              dev shop.
-              <br />
-              <span className="accent">Your technical</span>
-              <br />
-              co-founders.
-            </h2>
-          </div>
-          <div className="r-right">
-            <p className="about-body">
-              GOBT (Group of Blooming Technicians) is an advanced engineering
-              studio based in Kolkata, India. We merge startup thinking with
-              engineering excellence to build digital products that are
-              profitable, scalable, and conversion-ready. We analyze your
-              business before writing a single line of code.
-            </p>
-            <div className="about-pillars">
-              {[
-                { t: "Product Thinking", d: "Revenue models, user journeys and pain points analyzed before any development begins." },
-                { t: "Fast Execution", d: "Agile sprints. Weekly deliverables. MVPs shipped in weeks, not quarters." },
-                { t: "Premium Design", d: "Every pixel intentional. Interfaces that convert, delight, and reinforce your brand." },
-                { t: "Lasting Partnership", d: "We do not disappear after launch. We monitor, optimize, and scale with you." },
-              ].map((p) => (
-                <div key={p.t} className="pillar-card">
-                  <div className="pillar-title">{p.t}</div>
-                  <div className="pillar-desc">{p.d}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          WORKS
-         ══════════════════════════════════ */}
-      <section id="works" aria-label="Selected works">
-        {/* Centered header */}
-        <div className="works-header-center">
-          <div className="section-tag r-fade" style={{ marginBottom: "1.2rem", justifyContent: "center" }}>Selected Works</div>
-          <h2 className="section-h2 r-up" style={{ textAlign: "center" }}>
-            What we&apos;ve <span className="accent">built</span> so far.
-          </h2>
-          <p className="section-body r-up" style={{ textAlign: "center", marginTop: "1rem", color: "var(--fg2)" }}>
-            Real products. Real clients. Real impact worldwide.
-          </p>
-        </div>
-
-        {/* ── Web Platforms Carousel ── */}
-        <div className="works-carousel-block">
-          <div className="works-carousel-header">
-            <div className="works-category-label">
-              <span className="works-cat-dot" />
-              Web Platforms
-            </div>
-            <button className="vr-switch-btn" onClick={() => setVrCategory("Web")}>
-              <span className="vr-switch-dot" />
-              Switch to VR
-            </button>
-          </div>
-          <div className="works-carousel-wrap">
-            <button className="carousel-btn carousel-btn-left" aria-label="Previous web project"
-              onClick={() => { const el = document.getElementById("web-carousel"); if (el) el.scrollBy({ left: -360, behavior: "smooth" }); }}>
-              ←
-            </button>
-            <button className="carousel-btn carousel-btn-right" aria-label="Next web project"
-              onClick={() => { const el = document.getElementById("web-carousel"); if (el) el.scrollBy({ left: 360, behavior: "smooth" }); }}>
-              →
-            </button>
-            <div className="works-carousel-track" id="web-carousel">
-            {WORKS.filter((w) => w.category === "Web").map((work) => (
-              <article key={work.id} className="work-browser-card"
-                onClick={() => work.live && window.open(`https://${work.live}`, "_blank")}>
-                <div className="browser-chrome">
-                  <div className="browser-traffic-lights">
-                    <span className="tl tl-red" /><span className="tl tl-yellow" /><span className="tl tl-green" />
-                  </div>
-                  <div className="browser-url-bar">
-                    <span className="browser-lock">🔒</span>
-                    <span className="browser-url-text">{work.live || "gobt.in"}</span>
-                  </div>
-                </div>
-                <div className="browser-viewport">
-                  {work.image ? (
-                    <img src={work.image} alt={work.title} className="browser-screenshot" />
-                  ) : (
-                    <div className="browser-placeholder" style={{ background: work.bg }}>
-                      <div className="browser-placeholder-icon" style={{ color: work.accent }}>
-                        <svg viewBox="0 0 24 24" fill="none" width="34" height="34">
-                          <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
-                          <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.6" />
-                        </svg>
-                      </div>
-                      <div className="browser-placeholder-label">{work.title}</div>
-                    </div>
-                  )}
-                  <div className="browser-overlay" />
-                </div>
-              </article>
-            ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Mobile Apps Carousel ── */}
-        <div className="works-carousel-block">
-          <div className="works-carousel-header">
-            <div className="works-category-label">
-              <span className="works-cat-dot" />
-              Mobile Apps
-            </div>
-            <button className="vr-switch-btn" onClick={() => setVrCategory("App")}>
-              <span className="vr-switch-dot" />
-              Switch to VR
-            </button>
-          </div>
-          <div className="works-carousel-wrap">
-            <button className="carousel-btn carousel-btn-left" aria-label="Previous app project"
-              onClick={() => { const el = document.getElementById("app-carousel"); if (el) el.scrollBy({ left: -300, behavior: "smooth" }); }}>
-              ←
-            </button>
-            <button className="carousel-btn carousel-btn-right" aria-label="Next app project"
-              onClick={() => { const el = document.getElementById("app-carousel"); if (el) el.scrollBy({ left: 300, behavior: "smooth" }); }}>
-              →
-            </button>
-            <div className="works-carousel-track" id="app-carousel">
-            {WORKS.filter((w) => w.category === "App").map((work) => (
-              <article key={work.id} className="work-phone-card" aria-label={work.title}
-                onClick={() => work.live && window.open(`https://${work.live}`, "_blank")}>
-                <div className="phone-frame">
-                  <div className="phone-top-bar"><div className="phone-notch" /></div>
-                  <div className="phone-screen">
-                    {work.image ? (
-                      <img src={work.image} alt={work.title} className="phone-screenshot" />
-                    ) : (
-                      <div className="phone-placeholder" style={{ background: work.bg }}>
-                        <div className="phone-placeholder-icon" style={{ color: work.accent }}>
-                          <svg viewBox="0 0 24 24" fill="none" width="60" height="60">
-                            <rect x="6" y="2.5" width="12" height="19" rx="2.2" stroke="currentColor" strokeWidth="1.4" />
-                            <path d="M10.5 18.2h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="phone-bottom-bar"><div className="phone-home-indicator" /></div>
-                </div>
-              </article>
-            ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {vrCategory && (
-        <VRGallery category={vrCategory} onClose={() => setVrCategory(null)} />
-      )}
-
-      {/* ══════════════════════════════════
-          CLIENTS
-         ══════════════════════════════════ */}
-      <section id="clients" aria-label="Our clients">
-        <div className="section-tag r-fade" style={{ marginBottom: "1.5rem", justifyContent: "center", display: "flex", margin: "0 auto 1.5rem" }}>Our Clients</div>
-        <h2 className="section-h2" style={{ textAlign: "center", marginBottom: "4rem" }}>
-          Businesses that<br />
-          trust <span className="accent">GOBT.</span>
-        </h2>
-
-        <div className="client-logo-grid" aria-label="Client logos">
-          {CLIENTS.map((c, i) => (
-            <div key={i} className="client-logo-card">
-              {c.logo ? (
-                <img src={c.logo} alt={c.name} className={c.darkLogo ? "logo-invert" : undefined} />
-              ) : (
-                <div className="text-logo">{c.name}</div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          STATS
-         ══════════════════════════════════ */}
-      <section id="stats" aria-label="Our Impact">
-        <div className="stats-container">
-          <div className="stats-header">
-            <h2 className="section-h2">
-              Building for the <span className="accent">builders.</span>
-            </h2>
-            <p className="section-body" style={{ maxWidth: "500px" }}>
-              Our impact measured in numbers. From deep technical implementations to rapid feature scaling.
-            </p>
-          </div>
-          <div className="stats-grid">
-            {GOBT_STATS.map((s) => (
-              <div key={s.label} className="stat-card">
-                <div className="stat-number">
-                  <span className="stat-val" data-target={String(s.val)}>0</span>
-                  <span className="stat-sup">{s.sup}</span>
-                </div>
-                <div className="stat-label">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="stats-outro" style={{ textAlign: "center", marginTop: "5rem" }}>
-          <p className="r-fade" style={{ fontFamily: "var(--f-display)", fontWeight: 700, fontSize: "clamp(1.3rem, 2.2vw, 1.8rem)", letterSpacing: "-0.01em", textTransform: "none", color: "var(--fg)", marginBottom: "1.5rem" }}>
-            Ready to join them?
-          </p>
-          <a href="https://wa.me/918972297093" target="_blank" rel="noreferrer" className="btn-primary" style={{ display: "inline-flex", justifyContent: "center" }}>
-            <span>Start Your Project</span>
-            <span style={{ fontSize: "0.9rem" }}>→</span>
+      {/* ── MOBILE MENU ── */}
+      <div id="mobile-nav" className={menuOpen ? "open" : ""}>
+        {NAV_ITEMS.map((item) => (
+          <a
+            key={item.id}
+            className="mobile-link"
+            href={`#${item.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              goto(item.id);
+            }}
+          >
+            <span className="n">{item.n}</span> {item.label}
           </a>
-        </div>
-      </section>
+        ))}
+        <button className="btn btn-gold mobile-cta" onClick={() => goto("contact")}>
+          Start a project <span className="btn-arrow">→</span>
+        </button>
+      </div>
 
-      {/* ══════════════════════════════════
-          KNOW US
-         ══════════════════════════════════ */}
-      {/* KNOW US — hidden for now, revisiting later
-      <section id="know-us" aria-label="Our team">
-        <div className="know-intro" style={{ textAlign: "center" }}>
-          <div className="section-tag r-fade" style={{ marginBottom: "1.5rem", justifyContent: "center", display: "flex", margin: "0 auto 1.5rem" }}>Know Us</div>
-          <h2 className="section-h2" style={{ textAlign: "center" }}>
-            The people
-            <br />
-            behind <span className="accent">GOBT.</span>
-          </h2>
-          <p className="r-up" style={{ marginTop: "1.2rem", fontSize: "clamp(1rem, 1.4vw, 1.15rem)", fontWeight: 400, color: "var(--fg2)", maxWidth: "480px", lineHeight: 1.8, marginLeft: "auto", marginRight: "auto" }}>
-            Our engineering leadership team. Scalable architecture, production discipline, and conversion-focused product design.
-          </p>
-        </div>
+      {/* ── HERO ── */}
+      <section id="home">
+        <div className="hero-glow" aria-hidden="true" />
+        <div className="hero-grain" aria-hidden="true" />
 
-        <div className="know-grid">
-          {TEAM.map((m) => (
-            <div key={m.name} className="team-card" aria-label={m.name}>
-              <p className="team-card-quote">
-                <span className="team-card-openquote">&ldquo;</span>
-                {m.quote}
-                <span className="team-card-closequote">&rdquo;</span>
-              </p>
-              <div className="team-card-divider" />
-              <div className="team-name">{m.name}</div>
-              <div className="team-title">{m.title}</div>
+        <div className="wrap hero-grid">
+          <div className="hero-inner">
+            <span className="hero-eyebrow">Group Of Blooming Technicians</span>
+            <h1 className="hero-h1 r-up in-view">
+              We pioneer <span className="tw">Deep-Tech AI </span> that Automates.
+            </h1>
+            <p className="hero-desc r-up in-view">
+              We are a deep tech AI startup, recognised by DIIT, exploring AI and promulgating, ros, software development, IoT, AR/VR, digital twin and other cutting edge technologies for the greater goal of integrating cyber physical systems aligned with the vision of make in India and Atmanirbhar Bharat.
+            </p>
+            <div className="hero-actions r-up in-view">
+              <button className="btn btn-primary" onClick={() => goto("contact")}>
+                Start a project
+              </button>
+              <button className="btn btn-ghost" onClick={() => goto("work")}>
+                See our work
+              </button>
             </div>
-          ))}
+          </div>
+
+          <div className="hero-showcase r-fade in-view" aria-hidden="true">
+            <div className="hero-shot hero-shot-back">
+              <img src="/img/Gharkamali.png" alt="" loading="eager" />
+            </div>
+            <div className="hero-shot hero-shot-mid">
+              <img src="/img/navaru-image.png" alt="" loading="eager" />
+            </div>
+            <div className="hero-shot hero-shot-front">
+              <div className="hero-shot-chrome">
+                <span /><span /><span />
+              </div>
+              <img src="/img/tatacom.png" alt="" loading="eager" />
+            </div>
+            <div className="hero-shot-badge">
+              <span className="hero-shot-badge-dot" />
+              Live product
+            </div>
+          </div>
+        </div>
+
+        <div className="hero-visual">
+          <div className="hero-visual-inner">
+            <div className="hero-visual-cell">
+              <div className="hero-visual-num">9<span className="unit">+</span></div>
+              <div className="hero-visual-label">Active clients</div>
+            </div>
+            <div className="hero-visual-cell">
+              <div className="hero-visual-num">25<span className="unit">+</span></div>
+              <div className="hero-visual-label">Products launched</div>
+            </div>
+            <div className="hero-visual-cell">
+              <div className="hero-visual-num">4<span className="unit">yr</span></div>
+              <div className="hero-visual-label">Years active</div>
+            </div>
+            <div className="hero-visual-cell">
+              <div className="hero-visual-num">100<span className="unit">%</span></div>
+              <div className="hero-visual-label">Client retention</div>
+            </div>
+          </div>
         </div>
       </section>
-      */}
 
-      {/* ══════════════════════════════════
-          TESTIMONIALS
-         ══════════════════════════════════ */}
-      <section id="testimonials" aria-label="Client testimonials">
-        <div className="testimonials-header" style={{ textAlign: "center" }}>
-          <div className="section-tag r-fade" style={{ marginBottom: "1.5rem", justifyContent: "center", display: "flex", margin: "0 auto 1.5rem" }}>Testimonials</div>
-          <h2 className="section-h2" style={{ textAlign: "center" }}>
-            What our clients
-            <br />
-            say about <span className="accent">GOBT.</span>
-          </h2>
+      {/* ── 01 SERVICES ── */}
+      <section id="services" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag"><span className="num">01</span> Solution</span>
+              <h2 className="section-h2">Everything you need to <span className="accent">go digital</span>, under one roof.</h2>
+              <p className="section-lede">
+                From first sketch to shipped product — GOBT covers the full stack of what a
+                modern business needs to show up online and run better.
+              </p>
+            </div>
+          </div>
+          <div className="services-grid r-fade">
+            {SERVICES.map((s, i) => (
+              <div className="service-card glass-panel" key={s.label}>
+                <div className="service-card-icon">{SERVICE_ICONS[i]}</div>
+                <span className="service-card-title">{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="testi-marquee-wrapper">
+      </section>
+
+      {/* ── 02 PROCESS ── */}
+      <section id="process" className="section-border-top process-section">
+        <div className="wrap process-section-head-wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag"><span className="num">02</span> Process</span>
+              <h2 className="section-h2">Three steps. No black box.</h2>
+              <p className="section-lede">
+                You always know what stage your project is at, and you always see it working
+                before it's finished.
+              </p>
+            </div>
+          </div>
+        </div>
+        <ProcessSticky />
+      </section>
+
+      {/* ── 03 ESTIMATE ── */}
+      <section id="estimate" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag"><span className="num">03</span> Estimate</span>
+              <h2 className="section-h2">Get a feel for your project.</h2>
+              <p className="section-lede">
+                Adjust the sliders — this is a starting estimate, your custom quote comes after
+                a quick call.
+              </p>
+            </div>
+          </div>
+          <div className="r-fade">
+            <ScopeEstimator onQuote={() => goto("contact")} />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 04 WHY GOBT ── */}
+      <section id="why" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag"><span className="num">04</span> Why Us</span>
+              <ScrambleText as="h2" className="section-h2" text="What you get that a typical agency won't give you." />
+              <p className="section-lede">
+                No lock-in, no black-box billing, no disappearing after launch.
+              </p>
+            </div>
+          </div>
+          <div className="r-fade">
+            <WhyGOBT />
+          </div>
+        </div>
+      </section>
+
+      {/* ── CLIENTS ── */}
+      <section id="stats" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag">Clients</span>
+              <h2 className="section-h2">Businesses we've helped go digital.</h2>
+            </div>
+          </div>
+          <div className="client-logo-grid r-fade">
+            {CLIENTS.map((c) => (
+              <div className="client-logo-card" key={c.name}>
+                {c.logo ? (
+                  <img src={c.logo} alt={c.name} />
+                ) : (
+                  <span className="text-logo">{c.name}</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="stats-grid stats-grid-inline r-fade">
+            {GOBT_STATS.map((s) => (
+              <StatCard stat={s} key={s.label} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 05 TEAM / ABOUT ── */}
+      <section id="team" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag"><span className="num">05</span> About</span>
+              <h2 className="section-h2">The people behind GOBT.</h2>
+              <p className="section-lede">
+                A small, senior team — which means you talk to the people actually building
+                your product, not an account manager.
+              </p>
+            </div>
+          </div>
+          <div className="team-index r-fade">
+            {TEAM.map((member, i) => (
+              <div className="team-index-row" key={member.name}>
+                <span className="team-index-num">{String(i + 1).padStart(2, "0")}</span>
+                <div className="team-index-avatar">
+                  {member.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                </div>
+                <div className="team-index-id">
+                  <span className="team-index-name">{member.name}</span>
+                  <span className="team-index-title">{member.title}</span>
+                </div>
+                <p className="team-index-quote">{member.quote}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WORK ── */}
+      <section id="work" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag">Work</span>
+              <h2 className="section-h2">Recent builds.</h2>
+            </div>
+            {filter !== "All" && (
+              <button
+                className="vr-switch-btn r-up"
+                onClick={() => setVrCategory(filter)}
+              >
+                <span className="vr-switch-dot" />
+                Switch to VR
+              </button>
+            )}
+          </div>
+          <div className="work-filter-row r-fade">
+            {(["All", "Web", "App"] as const).map((f) => (
+              <button
+                key={f}
+                className={`work-filter-btn${filter === f ? " active" : ""}`}
+                onClick={() => setFilter(f)}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="work-grid r-fade">
+            {filteredWorks.map((w) => (
+              <WorkCard work={w} key={w.id} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BUG SCAN ── */}
+      <section className="section section-border-top bugscan-section">
+        <div className="wrap bugscan-grid">
+          <div className="bugscan-copy r-left">
+            <span className="section-num-tag">Security</span>
+            <h2 className="section-h2">We hunt bugs before your users do.</h2>
+            <p className="bugscan-body">
+              Every build goes through a security and QA pass before launch. Move your cursor
+              over the screen to see how we scan for vulnerabilities.
+            </p>
+            <p className="bugscan-callout">Hover the laptop screen to run a live scan.</p>
+          </div>
+          <div className="bugscan-visual r-right">
+            <span className="bugscan-label">Live Threat Scan</span>
+            <BugScanLaptop />
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section className="section section-border-top testi-section">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag">Testimonials</span>
+              <h2 className="section-h2">Don't take our word for it.</h2>
+            </div>
+          </div>
+        </div>
+        <div className="testi-marquee r-fade">
           <div className="testi-marquee-track">
             {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
-              <article key={i} className="testi-marquee-card">
-                <div className="testi-quote-icon">&ldquo;</div>
+              <div className="testi-card glass-panel" key={`${t.name}-${i}`}>
+                <span className="testi-quote-icon">&ldquo;</span>
                 <p className="testi-text">{t.text}</p>
                 <div className="testi-author">
+                  <div className="testi-avatar">{t.init}</div>
                   <div>
                     <div className="testi-name">{t.name}</div>
                     <div className="testi-role">{t.role}</div>
                   </div>
                 </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          CAREERS
-         ══════════════════════════════════ */}
-      <section id="careers" aria-label="Career Opportunities">
-        <div className="careers-container">
-          <div className="section-tag r-fade" style={{ marginBottom: "1.2rem", justifyContent: "center", display: "flex", margin: "0 auto 1.2rem" }}>Join GOBT</div>
-          <h2 className="section-h2 r-up" style={{ textAlign: "center", marginBottom: "3rem" }}>
-            Build the <span className="accent">Future</span> with us.
-          </h2>
-
-          <div className="careers-grid">
-            {JOBS.filter((job) => job.id !== "blockchain").map((job) => (
-              <div key={job.id} className="career-card" onClick={() => setActiveJob(job)}>
-                <div className="career-card-header">
-                  <h3>{job.title}</h3>
-                  <span className="career-arrow">↗</span>
-                </div>
-                <div className="career-meta">
-                  <span>{job.experience}</span>
-                  <span>•</span>
-                  <span>{job.type}</span>
-                  <span>•</span>
-                  <span>{job.location}</span>
-                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* JOB MODAL */}
-      <div className={`job-modal-overlay ${activeJob ? "open" : ""}`} onClick={() => setActiveJob(null)}>
-        <div className="job-modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="job-modal-close" onClick={() => setActiveJob(null)}>✕</button>
-          {activeJob && (
-            <>
-              <div className="job-modal-header">
-                <h2>{activeJob.title}</h2>
-                <div className="job-modal-meta">
-                  <span>{activeJob.experience}</span>
-                  <span>{activeJob.type}</span>
-                  <span>{activeJob.location}</span>
-                </div>
-              </div>
-              <div
-                className="job-modal-body"
-                dangerouslySetInnerHTML={{ __html: activeJob.description }}
-              />
-              <div className="job-modal-footer">
-                <a
-                  href={`mailto:career@gobt.in?subject=Application – ${activeJob.title}`}
-                  className="btn-primary mailtoui"
-                  style={{ width: "100%", justifyContent: "center" }}
-                >
-                  <span>Apply via Email</span>
-                  <span style={{ fontSize: "0.9rem" }}>→</span>
-                </a>
-                <p style={{ textAlign: "center", marginTop: "1rem", fontSize: "0.85rem", color: "var(--fg3)", letterSpacing: "0.02em" }}>
-                  Or send your resume directly to career@gobt.in
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════
-          CONTACT
-         ══════════════════════════════════ */}
-      <section id="contact" aria-label="Contact GOBT">
-        <div className="contact-watermark" aria-hidden="true">GOBT</div>
-        <div className="contact-grid">
-          <div className="r-left">
-            <div className="section-tag" style={{ marginBottom: "1.5rem" }}>Get In Touch</div>
-            <h2 className="section-h2">
-              Ready to build
-              <br />
-              something{" "}
-              <span className="accent">great?</span>
-            </h2>
-            <p className="contact-body">
-              Whether you have a fully specced brief or just a rough idea —
-              let&apos;s talk. No pitch decks, no agency fluff.
-            </p>
+      {/* ── CAREERS ── */}
+      <section id="careers" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag">Careers</span>
+              <h2 className="section-h2">We're hiring.</h2>
+            </div>
           </div>
-          <div className="r-right">
+          <div className="careers-list r-fade">
+            {JOBS.map((job, i) => (
+              <div className="career-row" key={job.id} onClick={() => setActiveJob(job)}>
+                <span className="career-row-num">{String(i + 1).padStart(2, "0")}</span>
+                <div className="career-row-body">
+                  <div className="career-row-title">{job.title}</div>
+                  <div className="career-row-meta">
+                    <span>{job.experience}</span>
+                    <span>{job.type}</span>
+                    <span>{job.location}</span>
+                  </div>
+                </div>
+                <span className="career-arrow">→</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 06 CONTACT ── */}
+      <section id="contact" className="section section-border-top">
+        <div className="wrap">
+          <div className="section-head">
+            <div className="r-up">
+              <span className="section-num-tag"><span className="num">06</span> Contact</span>
+              <ScrambleText as="h2" className="section-h2" text="Let's build something." />
+              <p className="section-lede">
+                Tell us what you're trying to build — we'll reply within 24 hours with next
+                steps.
+              </p>
+            </div>
+          </div>
+          <div className="contact-grid r-fade">
+            <div className="contact-info">
+              <div className="contact-info-row">
+                <span className="contact-info-label">Email</span>
+                <a className="contact-info-value" href="mailto:info@gobt.in">info@gobt.in</a>
+              </div>
+              <div className="contact-info-row">
+                <span className="contact-info-label">Location</span>
+                <span className="contact-info-value">Kolkata, India</span>
+              </div>
+              <div className="contact-info-row">
+                <span className="contact-info-label">Response time</span>
+                <span className="contact-info-value">Within 24 hours</span>
+              </div>
+            </div>
             <ContactForm />
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════
-          FOOTER
-         ══════════════════════════════════ */}
-      <footer role="contentinfo">
-        <div className="footer-aurora" aria-hidden="true" />
-        <nav className="footer-nav" aria-label="Footer navigation">
-          {[
-            ["about", "About"],
-            ["works", "Works"],
-            ["clients", "Clients"],
-            ["testimonials", "Testimonials"],
-            ["careers", "Careers"],
-            ["contact", "Contact"],
-          ].map(([id, label]) => (
-            <a key={id} href="#" onClick={(e) => { e.preventDefault(); goto(id); }}>
-              {label}
-            </a>
-          ))}
-        </nav>
-
-        <button
-          className="footer-wordmark-btn"
-          onClick={() => goto("home")}
-          aria-label="Back to top"
-        >
-          <span className="footer-wordmark">GOBT</span>
-        </button>
-
-        <div className="footer-bottom">
-          <div className="footer-socials">
-            <a href="https://www.linkedin.com/company/group-of-bluetechnicians/" target="_blank" rel="noreferrer" className="footer-social-link" aria-label="LinkedIn" title="LinkedIn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                <rect x="2" y="9" width="4" height="12" />
-                <circle cx="4" cy="4" r="2" />
-              </svg>
-            </a>
-            <a href="https://www.instagram.com/gobt.in" target="_blank" rel="noreferrer" className="footer-social-link" aria-label="Instagram" title="Instagram">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" />
-                <circle cx="12" cy="12" r="4.5" />
-                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-              </svg>
-            </a>
-            <a href="https://wa.me/918972297093" target="_blank" rel="noreferrer" className="footer-social-link" aria-label="WhatsApp" title="WhatsApp">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-              </svg>
-            </a>
-            <a href="mailto:info@gobt.in" className="footer-social-link" aria-label="Email" title="Email">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-            </a>
+      {/* ── FOOTER ── */}
+      <footer>
+        <div className="wrap footer-grid">
+          <div className="footer-brand">
+            <img src="/logo.png" alt="GOBT" className="footer-logo" />
+            <p className="footer-brand-desc">
+              GOBT — Group Of Blooming Technicians. A Kolkata-based digital engineering
+              studio building web platforms, mobile apps and custom software.
+            </p>
           </div>
-          <div className="f-copy">
-            <div>&copy; 2025 Group of Blooming Technicians. All rights reserved.</div>
-            <div style={{ opacity: 0.5, fontSize: '0.75rem' }}>Formally known as Group of Blue Technicians</div>
+
+          <div className="footer-col">
+            <div className="footer-col-title">Navigation</div>
+            <a href="#services" onClick={(e) => { e.preventDefault(); goto("services"); }}>Services</a>
+            <a href="#work" onClick={(e) => { e.preventDefault(); goto("work"); }}>Work</a>
+            <a href="#team" onClick={(e) => { e.preventDefault(); goto("team"); }}>Team</a>
+            <a href="#careers" onClick={(e) => { e.preventDefault(); goto("careers"); }}>Careers</a>
+            <a href="#contact" onClick={(e) => { e.preventDefault(); goto("contact"); }}>Contact</a>
+          </div>
+
+          <div className="footer-col footer-col-social">
+            <div className="footer-col-title">Social</div>
+            <a href="https://www.instagram.com/gobt.in/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://www.facebook.com/profile.php?id=61561011544267" target="_blank" rel="noopener noreferrer">Facebook</a>
+            <a href="https://wa.me/918972297093" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
           </div>
         </div>
+
+        <div className="wrap footer-bottom">
+          <span className="f-copy">Kolkata, India — {new Date().getFullYear()} GOBT Inc. All rights reserved.</span>
+          <div className="footer-legal">
+            <a href="#contact" onClick={(e) => { e.preventDefault(); goto("contact"); }}>Privacy Policy</a>
+            <a href="#contact" onClick={(e) => { e.preventDefault(); goto("contact"); }}>Terms of Use</a>
+          </div>
+        </div>
+
+        <div className="footer-wordmark-wrap" aria-hidden="true">
+          <span className="footer-wordmark">GOBT</span>
+        </div>
       </footer>
+
+      {/* ── JOB MODAL ── */}
+      <div className={`job-modal-overlay${activeJob ? " open" : ""}`} onClick={() => setActiveJob(null)}>
+        {activeJob && (
+          <div className="job-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="job-modal-close" onClick={() => setActiveJob(null)} aria-label="Close">✕</button>
+            <div className="job-modal-header">
+              <h2>{activeJob.title}</h2>
+              <div className="job-modal-meta">
+                <span>{activeJob.experience}</span>
+                <span>{activeJob.type}</span>
+                <span>{activeJob.location}</span>
+              </div>
+            </div>
+            <div
+              className="job-modal-body"
+              dangerouslySetInnerHTML={{ __html: activeJob.description }}
+            />
+            <div className="job-modal-footer">
+              <a className="btn btn-primary" href="mailto:info@gobt.in?subject=Application">
+                Apply now
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── VR GALLERY ── */}
+      {vrCategory && (
+        <VRGallery category={vrCategory} onClose={() => setVrCategory(null)} />
+      )}
     </>
   );
 }

@@ -32,10 +32,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#050507",
+  themeColor: "#fbfaf7",
 };
-
-import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -45,10 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head></head>
-      <body suppressHydrationWarning>
-        {children}
-        <Script src="/mailtoui.js" strategy="afterInteractive" />
-      </body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
