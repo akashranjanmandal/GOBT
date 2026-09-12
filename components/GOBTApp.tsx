@@ -597,6 +597,13 @@ function useScrollReveal() {
       els.forEach((el) => el.classList.add("in-view"));
       return;
     }
+    /* threshold is a fraction of the TARGET's own area, not the
+       viewport's — for tall elements (e.g. the work grid, easily
+       several viewport-heights tall on mobile) a 12% threshold can
+       need more pixels visible at once than a short viewport can
+       ever show, so it never fires. A tiny fixed threshold plus a
+       generous bottom rootMargin means "any part of this element
+       has entered" regardless of how large the element is. */
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -606,7 +613,7 @@ function useScrollReveal() {
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" }
+      { threshold: 0.01, rootMargin: "0px 0px -10% 0px" }
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
