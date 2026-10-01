@@ -1,5 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Unbounded } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+
+const display = Unbounded({ subsets: ["latin"], variable: "--font-display", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+const sans = localFont({
+  src: [
+    { path: "../public/fonts/GoogleSans-Variable.ttf", style: "normal", weight: "100 900" },
+    { path: "../public/fonts/GoogleSans-Variable-Italic.ttf", style: "italic", weight: "100 900" },
+  ],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "GOBT | Group of Blooming Technicians",
@@ -32,7 +45,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#fbfaf7",
+  themeColor: "#050403",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -41,8 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head></head>
+    <html lang="en" className={`${display.variable} ${mono.variable} ${sans.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );
