@@ -1,4 +1,5 @@
 import type Lenis from "lenis";
+import type { MouseEvent } from "react";
 
 /* Lenis instance shared across components without a context: the
    Experience root creates it, everything else just asks for it. */
@@ -40,3 +41,12 @@ export const introState = { done: false };
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Section links work from every page: on the homepage they smooth-
+   scroll in place, elsewhere the browser follows the real href
+   (e.g. "/#contact") and the homepage scrolls there after loading. */
+export function onSectionLink(e: MouseEvent, target: string | number) {
+  if (window.location.pathname !== "/") return;
+  e.preventDefault();
+  scrollToTarget(target);
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { SERVICES, TECH_RING } from "@/lib/content";
 import { gsap, ScrollTrigger, SplitText, useGSAP, MQ_MOTION, MQ_MOTION_DESKTOP, MQ_STATIC } from "@/lib/gsap";
 import { getLenis } from "@/lib/scroll";
@@ -214,7 +215,7 @@ export default function Services() {
           <div className="svc-left">
             <SectionHead title="Everything you need to *go digital,* under one roof." />
 
-            <div className="svc-detail" aria-hidden="true">
+            <div className="svc-detail">
               <div className="svc-detail-index">
                 <span className="svc-detail-num">{pad(active + 1)}</span>
                 <span className="svc-detail-total">/ {pad(N)}</span>
@@ -231,6 +232,9 @@ export default function Services() {
                   <li key={t}>{t}</li>
                 ))}
               </ul>
+              <Link href={svc.page} className="svc-detail-link" key={`l-${active}`}>
+                Explore {svc.label} <span aria-hidden="true">→</span>
+              </Link>
             </div>
 
             <div className="svc-ticks" aria-hidden="true">
@@ -290,7 +294,9 @@ export default function Services() {
           <li className="svc-card" key={s.label}>
             <span className="svc-card-num">{pad(i + 1)}</span>
             <span className="svc-card-icon">{SERVICE_ICONS[i]}</span>
-            <h3 className="svc-card-title">{s.label}</h3>
+            <h3 className="svc-card-title">
+              <Link href={s.page}>{s.label}</Link>
+            </h3>
             <p className="svc-card-desc">{s.desc}</p>
             <ul className="svc-card-tags">
               {s.tags.map((t) => (

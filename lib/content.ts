@@ -564,56 +564,67 @@ export const JOBS: Job[] = [
 export const SERVICES = [
   {
     label: "Websites & Web Dashboards",
+    page: "/services/web-development",
     desc: "High-performance websites, portals and admin dashboards: fast, SEO-ready and built to convert.",
     tags: ["Next.js", "SEO", "Dashboards"],
   },
   {
     label: "Mobile Apps",
+    page: "/services/mobile-app-development",
     desc: "Android and iOS apps with live tracking, real-time booking and payments built in.",
     tags: ["React Native", "Firebase", "Maps"],
   },
   {
     label: "UI/UX Design",
+    page: "/services/ui-ux-design",
     desc: "Research-led interfaces and design systems, prototyped in Figma before a line of code is written.",
     tags: ["Figma", "Prototyping", "Design Systems"],
   },
   {
     label: "Digital Growth",
+    page: "/services/digital-growth-seo",
     desc: "SEO, performance and conversion funnels that turn traffic into enquiries.",
     tags: ["SEO", "Analytics", "Funnels"],
   },
   {
     label: "Custom Software",
+    page: "/services/custom-software-development",
     desc: "Bespoke platforms, APIs and microservices engineered around how your business actually works.",
     tags: ["Go", "Node.js", "PostgreSQL"],
   },
   {
     label: "Smart Devices & IoT",
+    page: "/services/iot-smart-devices",
     desc: "Connected devices and cyber-physical systems that bridge the physical and the digital.",
     tags: ["IoT", "ROS", "Digital Twin"],
   },
   {
     label: "AI Solutions",
+    page: "/services/deep-tech-ai-solutions",
     desc: "Applied AI: recommendations, automation and intelligent workflows that do real work.",
     tags: ["AI", "Automation", "Recommendations"],
   },
   {
     label: "Branding",
+    page: "/services/ui-ux-design",
     desc: "Identity systems (logo, voice and visual language) that make a brand unmistakable.",
     tags: ["Identity", "Logo", "Guidelines"],
   },
   {
     label: "Data Collection",
+    page: "/services/custom-software-development",
     desc: "Pipelines that capture, clean and structure the data your decisions run on.",
     tags: ["Pipelines", "APIs", "Reporting"],
   },
   {
     label: "Cyber Security",
+    page: "/services/cyber-security",
     desc: "Security audits and QA passes on every build, before your users ever see it.",
     tags: ["Audits", "Pen-testing", "QA"],
   },
   {
     label: "Game Development",
+    page: "/services/ar-vr-game-development",
     desc: "Real-time 3D, WebGL and AR/VR experiences that people want to play with.",
     tags: ["Three.js", "WebGL", "AR/VR"],
   },

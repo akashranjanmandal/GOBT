@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Unbounded } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { KEYWORDS, SITE } from "@/lib/seo";
 
 const display = Unbounded({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
@@ -14,31 +15,44 @@ const sans = localFont({
   display: "swap",
 });
 
+const TITLE = `${SITE.name} — ${SITE.tagline}`;
+
+/* Root metadata: every page inherits this; service pages override the
+   title (via the template), description, keywords and canonical.
+   The share image comes from app/opengraph-image.tsx. */
 export const metadata: Metadata = {
-  title: "GOBT | Group of Blooming Technicians",
-  description:
-    "India's premier digital engineering studio. We build mobile apps, web platforms, and premium UI/UX for businesses that demand excellence.",
-  keywords:
-    "app development India, web development, UI UX design, React Native, Next.js, Figma, startup tech partner, GOBT, Group of Blooming Technicians, Kolkata",
-  authors: [{ name: "GOBT", url: "https://gobt.in" }],
-  creator: "GOBT",
-  metadataBase: new URL("https://gobt.in"),
-  alternates: { canonical: "/" },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  metadataBase: new URL(SITE.url),
+  title: { default: TITLE, template: `%s | ${SITE.name}` },
+  description: SITE.description,
+  keywords: KEYWORDS,
+  applicationName: SITE.name,
+  authors: [{ name: SITE.legalName, url: SITE.url }],
+  creator: SITE.name,
+  publisher: SITE.name,
+  category: "technology",
+  alternates: { canonical: "/", languages: { "en-IN": "/" } },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://gobt.in",
-    siteName: "GOBT",
-    title: "GOBT | Group of Blooming Technicians",
-    description: "We build digital products that define the future.",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "GOBT Studio" }],
+    url: SITE.url,
+    siteName: SITE.name,
+    title: TITLE,
+    description: SITE.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "GOBT | Group of Blooming Technicians",
-    description: "India's premier digital engineering studio.",
-    images: ["/og.png"],
+    title: TITLE,
+    description: SITE.description,
+  },
+  formatDetection: { telephone: false },
+  other: {
+    "geo.region": "IN-WB",
+    "geo.placename": "Kolkata",
   },
 };
 
@@ -55,7 +69,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${display.variable} ${mono.variable} ${sans.variable}`} suppressHydrationWarning>
+    <html lang="en-IN" className={`${display.variable} ${mono.variable} ${sans.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

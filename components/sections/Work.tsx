@@ -1,8 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { WORKS, type Work as WorkItem } from "@/lib/content";
 import { gsap, ScrollTrigger, useGSAP, MQ_MOTION_DESKTOP } from "@/lib/gsap";
@@ -10,10 +8,9 @@ import { scrollToTarget } from "@/lib/scroll";
 import SectionHead from "@/components/ui/SectionHead";
 import { IconArrow } from "@/components/ui/icons";
 
-const VRGallery = dynamic(() => import("@/components/sections/VRGallery"), { ssr: false });
-
 const FEATURED = WORKS.filter((w) => w.featured);
 const pad = (n: number) => String(n).padStart(2, "0");
+const PAGE = 5;
 type Filter = "All" | "Web" | "App";
 
 function FeaturedCard({ work, index }: { work: WorkItem; index: number }) {
@@ -74,10 +71,13 @@ export default function Work() {
   const [filter, setFilter] = useState<Filter>("All");
   const [hovered, setHovered] = useState<number | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
-  const [vr, setVr] = useState(false);
-  const closeVr = useCallback(() => setVr(false), []);
+  const [visible, setVisible] = useState(PAGE);
 
   const list = filter === "All" ? WORKS : WORKS.filter((w) => w.category === filter);
+  /* the index opens with a few rows; the last one shown fades out
+     under a "See more" while more remain */
+  const shown = list.slice(0, visible);
+  const hasMore = list.length > visible;
   const counts: Record<Filter, number> = {
     All: WORKS.length,
     Web: WORKS.filter((w) => w.category === "Web").length,
@@ -254,22 +254,22 @@ export default function Work() {
                   key={f}
                   className={`wi-filter${filter === f ? " is-active" : ""}`}
                   aria-pressed={filter === f}
-                  onClick={() => setFilter(f)}
+                  onClick={() => {
+                    setFilter(f);
+                    setVisible(PAGE);
+                  }}
                 >
                   {f}
                   <span>{pad(counts[f])}</span>
                 </button>
               ))}
             </div>
-            <button className="btn btn-gold wi-vr" onClick={() => setVr(true)} data-magnetic>
-              <span className="wi-vr-dot" aria-hidden="true" />
-              <span className="btn-label">Enter VR gallery</span>
-            </button>
           </div>
         </div>
 
-        <ul className="wi-list" key={filter} ref={listRef} onPointerLeave={() => setHovered(null)}>
-          {list.map((w, i) => {
+        <ul className={`wi-list${hasMore ? " has-more" : ""}`} key={filter} ref={listRef} onPointerLeave={() => setHovered(null)}>
+          {shown.map((w, i) => {
+            const faded = hasMore && i === shown.length - 1;
             const idx = WORKS.indexOf(w);
             const row = (
               <>
@@ -289,9 +289,11 @@ export default function Work() {
             return (
               <li
                 key={w.id}
-                className={`wi-row${hovered === idx ? " is-hover" : ""}`}
-                style={{ "--i": i } as React.CSSProperties}
-                onPointerEnter={() => setHovered(idx)}
+                className={`wi-row${hovered === idx ? " is-hover" : ""}${faded ? " is-faded" : ""}`}
+                style={{ "--i": i % PAGE } as React.CSSProperties}
+                onPointerEnter={() => !faded && setHovered(idx)}
+                aria-hidden={faded || undefined}
+                inert={faded || undefined}
               >
                 {w.live ? (
                   <a className="wi-link" href={`https://${w.live}`} target="_blank" rel="noopener noreferrer">
@@ -304,6 +306,14 @@ export default function Work() {
             );
           })}
         </ul>
+        {hasMore && (
+          <div className="wi-more">
+            <button className="btn btn-ghost" onClick={() => setVisible((v) => v + PAGE)}>
+              <span className="btn-label">See more</span>
+              <span className="btn-arrow" aria-hidden="true">↓</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className={`wi-preview${hovered !== null ? " is-on" : ""}`} ref={previewRef} aria-hidden="true">
@@ -318,7 +328,6 @@ export default function Work() {
         </div>
       </div>
 
-      {vr && createPortal(<VRGallery category={filter} onClose={closeVr} />, document.body)}
     </section>
   );
 }

@@ -12,12 +12,18 @@ import Team from "@/components/sections/Team";
 import Careers from "@/components/sections/Careers";
 import Contact from "@/components/sections/Contact";
 import Footer from "@/components/sections/Footer";
+import Faq from "@/components/sections/Faq";
+import { HOME_FAQS, faqLd, jsonLd, organizationLd } from "@/lib/seo";
 
 /* Sections render on the server for real HTML (SEO, first paint);
    motion and WebGL attach on the client inside Experience. */
 export default function Page() {
   return (
     <Experience>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd([organizationLd(), faqLd(HOME_FAQS)]) }}
+      />
       <Hero />
       <Services />
       <Work />
@@ -29,6 +35,7 @@ export default function Page() {
       <Testimonials />
       <Team />
       <Careers />
+      <Faq />
       <Contact />
       <Footer />
     </Experience>

@@ -3,8 +3,27 @@
 import { useEffect, useRef } from "react";
 import { MARQUEE_WORDS, NAV_ITEMS, SOCIALS, CONTACT } from "@/lib/content";
 import { gsap, useGSAP, MQ_MOTION } from "@/lib/gsap";
-import { getLenis, prefersReducedMotion, scrollToTarget } from "@/lib/scroll";
+import { getLenis, onSectionLink, prefersReducedMotion, scrollToTarget } from "@/lib/scroll";
 import { markup } from "@/lib/markup";
+import Link from "next/link";
+import { SERVICE_PAGES, servicePath } from "@/lib/seo";
+
+const ICON = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+
+const SOCIAL_ICONS: Record<string, React.ReactNode> = {
+  Instagram: (
+    <svg {...ICON} aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" /></svg>
+  ),
+  Facebook: (
+    <svg {...ICON} aria-hidden="true"><path d="M15 3h-2a4 4 0 00-4 4v3H7v4h2v7h4v-7h3l1-4h-4V7a1 1 0 011-1h2z" /></svg>
+  ),
+  WhatsApp: (
+    <svg {...ICON} aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 01-12.6 7.4L3.5 20l1.2-3.8A8.5 8.5 0 1120 11.5z" /><path d="M9 8.5c0 3 2.5 6.5 6 6.8l1.2-1.4-1.9-.9-.8.8c-1.1-.4-2.4-1.7-2.8-2.8l.8-.8-.9-1.9L9 8.5z" /></svg>
+  ),
+  LinkedIn: (
+    <svg {...ICON} aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7.5 10v6.5M7.5 7.5v.01M11 16.5V13a2.5 2.5 0 015 0v3.5M11 10v6.5" /></svg>
+  ),
+};
 
 export default function Footer() {
   const root = useRef<HTMLElement>(null);
@@ -82,18 +101,15 @@ export default function Footer() {
 
       <div className="wrap fc">
         <p className="fc-title" data-reveal="lines" dangerouslySetInnerHTML={{ __html: markup("Have a project in mind? *Let’s make it real.*") }} />
-        <a
-          href="#contact"
+        <Link
+          href="/#contact"
           className="btn btn-gold btn-lg"
           data-magnetic
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToTarget("#contact");
-          }}
+          onClick={(e) => onSectionLink(e, "#contact")}
         >
           <span className="btn-label">Start a project</span>
           <span className="btn-arrow" aria-hidden="true">↗</span>
-        </a>
+        </Link>
       </div>
 
       <div className="wrap fg">
@@ -104,30 +120,28 @@ export default function Footer() {
             GOBT — Group Of Blooming Technicians. A Kolkata-based digital engineering studio building web platforms,
             mobile apps and custom software.
           </p>
+          <div className="fg-socials">
+            {SOCIALS.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} title={s.label}>
+                {SOCIAL_ICONS[s.label]}
+              </a>
+            ))}
+          </div>
         </div>
-        <nav className="fg-col" aria-label="Footer">
+        <nav className="fg-col fg-nav" aria-label="Footer">
           <span className="fg-title">Navigate</span>
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToTarget(`#${item.id}`);
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
+          <div className="fg-nav-grid">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.id}
+                href={`/#${item.id}`}
+                onClick={(e) => onSectionLink(e, `#${item.id}`)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
-        <div className="fg-col">
-          <span className="fg-title">Social</span>
-          {SOCIALS.map((s) => (
-            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer">
-              {s.label} <span aria-hidden="true">↗</span>
-            </a>
-          ))}
-        </div>
         <div className="fg-col">
           <span className="fg-title">Reach</span>
           <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
@@ -135,28 +149,33 @@ export default function Footer() {
         </div>
       </div>
 
+      <nav className="wrap fs" aria-label="Services">
+        <span className="fg-title">Services</span>
+        <ul>
+          {SERVICE_PAGES.map((sp) => (
+            <li key={sp.slug}>
+              <Link href={servicePath(sp.slug)}>{sp.name}</Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <div className="wrap fb">
         <span>Kolkata, India — {new Date().getFullYear()} GOBT Inc. All rights reserved.</span>
         <div className="fb-links">
-          <a
-            href="#contact"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToTarget("#contact");
-            }}
+          <Link
+            href="/#contact"
+            onClick={(e) => onSectionLink(e, "#contact")}
           >
             Privacy Policy
-          </a>
-          <a
-            href="#contact"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToTarget("#contact");
-            }}
+          </Link>
+          <Link
+            href="/#contact"
+            onClick={(e) => onSectionLink(e, "#contact")}
           >
             Terms of Use
-          </a>
-          <button className="fb-top" onClick={() => scrollToTarget(0)}>
+          </Link>
+          <button className="fb-top" onClick={() => (window.location.pathname === "/" ? scrollToTarget(0) : window.scrollTo({ top: 0, behavior: "smooth" }))}>
             Back to top ↑
           </button>
         </div>

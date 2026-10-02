@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { scrollToTarget } from "@/lib/scroll";
+import { onSectionLink } from "@/lib/scroll";
 
 /* Minimal header: the mark on the left, one call to action on the
    right. It never hides, and picks up a dark backing once the page
@@ -28,31 +29,25 @@ export default function Nav() {
   return (
     <header className="nav" ref={navRef}>
       <div className="nav-inner">
-        <a
-          href="#home"
+        <Link
+          href="/"
           className="nav-logo"
           aria-label="GOBT — back to top"
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToTarget(0);
-          }}
+          onClick={(e) => onSectionLink(e, 0)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="GOBT" width={389} height={363} />
-        </a>
+        </Link>
 
-        <a
-          href="#contact"
+        <Link
+          href="/#contact"
           className="btn btn-gold nav-cta"
           data-magnetic
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToTarget("#contact");
-          }}
+          onClick={(e) => onSectionLink(e, "#contact")}
         >
           <span className="btn-label">Start a project</span>
           <span className="btn-arrow" aria-hidden="true">↗</span>
-        </a>
+        </Link>
       </div>
     </header>
   );
