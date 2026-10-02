@@ -13,6 +13,7 @@ import {
 import { EVT_PREFILL, scrollToTarget } from "@/lib/scroll";
 import SectionHead from "@/components/ui/SectionHead";
 import { IconBrowser, IconDashboard, IconPhone } from "@/components/ui/icons";
+import { track } from "@/lib/analytics";
 
 const TYPE_ICONS: Record<EstimateType, React.ReactNode> = {
   Website: <IconBrowser />,
@@ -125,6 +126,7 @@ export default function Estimate() {
   const quote = () => {
     const message = `Hi GOBT, I'm planning a ${type} (${scope} scope). Your estimator suggests ${timeline} with ${ESTIMATE_TEAM[scope].toLowerCase()}. Here's what I have in mind: `;
     window.dispatchEvent(new CustomEvent(EVT_PREFILL, { detail: message }));
+    track("estimate_cta", { project_type: type, scope });
     scrollToTarget("#contact");
   };
 

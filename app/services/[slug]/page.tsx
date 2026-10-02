@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { COMPARE_ROWS, PROCESS_STEPS, WORKS } from "@/lib/content";
-import { SERVICE_PAGES, SITE, faqLd, jsonLd, servicePath } from "@/lib/seo";
+import { SERVICE_PAGES, SITE, faqLd, jsonLd, servicePath, workPath } from "@/lib/seo";
 import Nav from "@/components/ui/Nav";
 import Footer from "@/components/sections/Footer";
 
@@ -130,11 +130,7 @@ export default async function ServicePage({ params }: Props) {
                   <span className="sp-work-tag">{w.tag}</span>
                   <h3>{w.title}</h3>
                   <p>{w.desc}</p>
-                  {w.live && (
-                    <a href={`https://${w.live}`} target="_blank" rel="noopener noreferrer">
-                      Visit {w.live} ↗
-                    </a>
-                  )}
+                  <Link href={workPath(w.title)}>Read the case study →</Link>
                 </li>
               ))}
             </ul>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { workPath } from "@/lib/seo";
 import { WORKS, type Work as WorkItem } from "@/lib/content";
 import { gsap, ScrollTrigger, useGSAP, MQ_MOTION_DESKTOP } from "@/lib/gsap";
 import { scrollToTarget } from "@/lib/scroll";
@@ -48,13 +50,9 @@ function FeaturedCard({ work, index }: { work: WorkItem; index: number }) {
   );
   return (
     <article className="wf-card">
-      {work.live ? (
-        <a className="wf-link" href={`https://${work.live}`} target="_blank" rel="noopener noreferrer">
-          {body}
-        </a>
-      ) : (
-        <div className="wf-link">{body}</div>
-      )}
+      <Link className="wf-link" href={workPath(work.title)}>
+        {body}
+      </Link>
     </article>
   );
 }
@@ -282,7 +280,7 @@ export default function Work() {
                 <span className="wi-tech">{w.tech.join(" · ")}</span>
                 <span className="wi-cat">{w.category}</span>
                 <span className="wi-arrow" aria-hidden="true">
-                  {w.live ? <IconArrow /> : <span className="wi-private">Private</span>}
+                  <IconArrow />
                 </span>
               </>
             );
@@ -295,13 +293,9 @@ export default function Work() {
                 aria-hidden={faded || undefined}
                 inert={faded || undefined}
               >
-                {w.live ? (
-                  <a className="wi-link" href={`https://${w.live}`} target="_blank" rel="noopener noreferrer">
-                    {row}
-                  </a>
-                ) : (
-                  <div className="wi-link">{row}</div>
-                )}
+                <Link className="wi-link" href={workPath(w.title)} tabIndex={faded ? -1 : undefined}>
+                  {row}
+                </Link>
               </li>
             );
           })}

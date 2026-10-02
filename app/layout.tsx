@@ -3,6 +3,7 @@ import { JetBrains_Mono, Unbounded } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { KEYWORDS, SITE } from "@/lib/seo";
+import Analytics from "@/components/Analytics";
 
 const display = Unbounded({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
@@ -50,6 +51,13 @@ export const metadata: Metadata = {
     description: SITE.description,
   },
   formatDetection: { telephone: false },
+  /* Search Console / Bing Webmaster ownership — set the tokens in the host's env */
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : undefined,
+  },
   other: {
     "geo.region": "IN-WB",
     "geo.placename": "Kolkata",
@@ -70,7 +78,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en-IN" className={`${display.variable} ${mono.variable} ${sans.variable}`} suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

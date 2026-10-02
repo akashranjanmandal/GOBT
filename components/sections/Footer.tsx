@@ -145,7 +145,7 @@ export default function Footer() {
         <div className="fg-col">
           <span className="fg-title">Reach</span>
           <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
-          <span>{CONTACT.location}</span>
+          <Link href="/kolkata">{CONTACT.location}</Link>
         </div>
       </div>
 
@@ -163,18 +163,8 @@ export default function Footer() {
       <div className="wrap fb">
         <span>Kolkata, India — {new Date().getFullYear()} GOBT Inc. All rights reserved.</span>
         <div className="fb-links">
-          <Link
-            href="/#contact"
-            onClick={(e) => onSectionLink(e, "#contact")}
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            href="/#contact"
-            onClick={(e) => onSectionLink(e, "#contact")}
-          >
-            Terms of Use
-          </Link>
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms of Use</Link>
           <button className="fb-top" onClick={() => (window.location.pathname === "/" ? scrollToTarget(0) : window.scrollTo({ top: 0, behavior: "smooth" }))}>
             Back to top ↑
           </button>

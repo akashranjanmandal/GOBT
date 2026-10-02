@@ -5,6 +5,7 @@ import { CONTACT } from "@/lib/content";
 import { EVT_PREFILL } from "@/lib/scroll";
 import { markup } from "@/lib/markup";
 import { IconCheck } from "@/components/ui/icons";
+import { track } from "@/lib/analytics";
 
 type Field = "name" | "email" | "company" | "message";
 type Phase = "idle" | "sending" | "sent" | "error";
@@ -60,6 +61,7 @@ export default function Contact() {
         body: JSON.stringify(form),
       });
       setPhase(res.ok ? "sent" : "error");
+      if (res.ok) track("generate_lead", { form: "contact" });
     } catch {
       setPhase("error");
     }

@@ -178,7 +178,7 @@ export const WORKS: Work[] = [
     accent: "#22d3ee",
     category: "Web",
     live: "gobtxtata.gobt.in",
-    image: "/img/tatacom.png",
+    image: "/img/tata-communications-3d-eyewear-experience.png",
     featured: true,
   },
   {
@@ -190,7 +190,7 @@ export const WORKS: Work[] = [
     accent: "#e84040",
     category: "Web",
     live: "pizzahap.com",
-    image: "/img/pizzahap.png",
+    image: "/img/pizzahap-website-and-branding.png",
     featured: true,
   },
   {
@@ -202,7 +202,7 @@ export const WORKS: Work[] = [
     accent: "#4060ff",
     category: "Web",
     live: "agileengcon.in",
-    image: "/img/AgileEnginnerng.png",
+    image: "/img/agile-engineering-corporate-website.png",
     featured: true,
   },
   {
@@ -214,7 +214,7 @@ export const WORKS: Work[] = [
     accent: "#7c3aed",
     category: "Web",
     live: "gftd.in",
-    image: "/img/GFTD.png",
+    image: "/img/gftd-ecommerce-gifting-platform.png",
     featured: true,
   },
   {
@@ -226,7 +226,7 @@ export const WORKS: Work[] = [
     accent: "#ff6a2b",
     category: "Web",
     live: "mohiniprintshop.org",
-    image: "/img/mohini.png",
+    image: "/img/mohini-printers-print-dashboard.png",
   },
   {
     id: 5,
@@ -237,7 +237,7 @@ export const WORKS: Work[] = [
     accent: "#d97706",
     category: "Web",
     live: "accurateastro.in",
-    image: "/img/AccurateAstro.png",
+    image: "/img/accurate-astro-booking-platform.png",
   },
   {
     id: 6,
@@ -248,7 +248,7 @@ export const WORKS: Work[] = [
     accent: "#c2810a",
     category: "Web",
     live: "altaqwa.in",
-    image: "/img/altaqwa.png",
+    image: "/img/al-taqwa-luxury-ecommerce.png",
     featured: true,
   },
   {
@@ -260,7 +260,7 @@ export const WORKS: Work[] = [
     accent: "#b47e11",
     category: "Web",
     live: "navaru.in",
-    image: "/img/navaru-image.png",
+    image: "/img/navaru-corporate-website.png",
   },
   {
     id: 12,
@@ -271,7 +271,7 @@ export const WORKS: Work[] = [
     accent: "#3b82f6",
     category: "Web",
     live: "oasiselevators.in",
-    image: "/img/oasis-image.png",
+    image: "/img/oasis-elevators-website.png",
   },
   {
     id: 13,
@@ -282,7 +282,7 @@ export const WORKS: Work[] = [
     accent: "#a855f7",
     category: "Web",
     live: "mastermindabacusodisha.com",
-    image: "/img/mma-image.png",
+    image: "/img/mastermind-abacus-odisha-website.png",
   },
   {
     id: 14,
@@ -293,7 +293,7 @@ export const WORKS: Work[] = [
     accent: "#22c55e",
     category: "Web",
     live: "ideashapers.org",
-    image: "/img/ideashapers-image.png",
+    image: "/img/idea-shapers-website.png",
   },
   {
     id: 17,
@@ -304,7 +304,7 @@ export const WORKS: Work[] = [
     accent: "#0891b2",
     category: "Web",
     live: "",
-    image: "/img/Suregem.png",
+    image: "/img/suregem-gem-consulting-portal.png",
   },
   {
     id: 7,
@@ -315,7 +315,7 @@ export const WORKS: Work[] = [
     accent: "#ef4444",
     category: "App",
     live: "",
-    image: "/img/pizzahap.png",
+    image: "/img/pizzahap-website-and-branding.png",
   },
   {
     id: 18,
@@ -326,7 +326,7 @@ export const WORKS: Work[] = [
     accent: "#0ea5e9",
     category: "Web",
     live: "gharkamali.com",
-    image: "/img/gkm-image.png",
+    image: "/img/gharkamali-home-services-marketplace.png",
     featured: true,
   },
   {
@@ -338,7 +338,7 @@ export const WORKS: Work[] = [
     accent: "#0ea5e9",
     category: "App",
     live: "gharkamali.com",
-    image: "/img/Gharkamali.png",
+    image: "/img/gharkamali-mobile-app.png",
   },
 ];
 

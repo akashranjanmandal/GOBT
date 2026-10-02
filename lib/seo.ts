@@ -1,3 +1,5 @@
+import { TEAM } from "./content";
+
 /* ──────────────────────────────────────────
    SEO DATA
    Site identity for metadata + structured data, and the content of
@@ -380,6 +382,17 @@ export function organizationLd() {
         telephone: SITE.phone,
         address: { "@type": "PostalAddress", addressLocality: SITE.city, addressRegion: SITE.region, addressCountry: SITE.country },
         areaServed: { "@type": "Country", name: "India" },
+        foundingLocation: { "@type": "Place", name: `${SITE.city}, ${SITE.region}, India` },
+        founder: { "@type": "Person", name: TEAM[0].name, jobTitle: TEAM[0].title },
+        employee: TEAM.map((m) => ({ "@type": "Person", name: m.name, jobTitle: m.title })),
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "sales",
+          telephone: SITE.phone,
+          email: SITE.email,
+          areaServed: "IN",
+          availableLanguage: ["English", "Hindi", "Bengali"],
+        },
         sameAs: SITE.sameAs,
         knowsAbout: ["Artificial intelligence", "Digital transformation", "Web development", "Mobile app development", "Custom software development", "Internet of things", "Digital twin", "Robot Operating System", "UI/UX design", "Cyber security", "Augmented reality", "Virtual reality"],
         hasOfferCatalog: {
@@ -409,4 +422,26 @@ export function faqLd(faqs: Faq[]) {
     "@type": "FAQPage",
     mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
   };
+}
+
+/* ── Case studies (/work/[slug]) ── */
+
+export const workSlug = (title: string) =>
+  title.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+export const workPath = (title: string) => `/work/${workSlug(title)}`;
+
+/* which service page each project is proof for, by its tag */
+export function serviceForTag(tag: string, category: "Web" | "App") {
+  const slug =
+    category === "App" || /mobile/i.test(tag)
+      ? "mobile-app-development"
+      : /3d/i.test(tag)
+        ? "ar-vr-game-development"
+        : /dashboard/i.test(tag)
+          ? "custom-software-development"
+          : /gem|consult/i.test(tag)
+            ? "digital-growth-seo"
+            : "web-development";
+  return SERVICE_PAGES.find((s) => s.slug === slug) ?? SERVICE_PAGES[0];
 }
