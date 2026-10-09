@@ -7,15 +7,15 @@ import { GUIDE_STOPS } from "@/lib/guide";
    the step in view. Scroll-driven (sticky) sections get a beat per item
    along their travel; on layouts where they're plain lists, a beat per
    card instead. */
-export type Beat = { index: number; y: () => number; text: () => string };
+export type Beat = { index: number; y: () => number; text: () => string; act?: () => void };
 
 const indexOf = (id: string) => GUIDE_STOPS.findIndex((s) => s.id === id);
 const pageTop = (el: Element | null | undefined, offset = 0) =>
   el ? el.getBoundingClientRect().top + window.scrollY + offset : 0;
 const read = (root: ParentNode | null | undefined, sel: string) => root?.querySelector(sel)?.textContent?.trim() ?? "";
 const section = (id: string) => document.getElementById(id);
-/* a scroller taller than the screen means its stage is sticky */
-const isSticky = (el: HTMLElement | null | undefined) => !!el && el.offsetHeight > window.innerHeight * 1.3;
+/* is the section's stage pinned (desktop), or a plain layout (phones)? */
+const isSticky = (pin: Element | null | undefined) => !!pin && getComputedStyle(pin).position === "sticky";
 
 /* Horizontal reels (work, process) move one pixel sideways per pixel
    scrolled, so the scroll that centres a card is "now + its offset
@@ -60,7 +60,7 @@ export function buildBeats(): Beat[] {
   const svc = section("services");
   intro("services", () => pageTop(svc?.querySelector(".manifesto"), -90));
   const svcScroller = svc?.querySelector<HTMLElement>(".svc-scroller");
-  if (isSticky(svcScroller) && svcScroller) {
+  if (isSticky(svc?.querySelector(".svc-pin")) && svcScroller) {
     const n = svc?.querySelectorAll(".svc-tick").length || 1;
     through("services", svcScroller, n, () => `${read(svc, ".svc-detail-num")}. ${read(svc, ".svc-detail-title")}: ${read(svc, ".svc-detail-desc")}`);
   } else {
@@ -72,15 +72,26 @@ export function buildBeats(): Beat[] {
   const workScroller = work?.querySelector<HTMLElement>(".work-scroller");
   const cards = Array.from(work?.querySelectorAll(".wf-card") ?? []);
   const describe = (el: Element) => `${read(el, ".wf-title")} (${read(el, ".wf-tag").toLowerCase()}): ${read(el, ".wf-desc")}`;
-  if (isSticky(workScroller) && workScroller) {
+  if (isSticky(work?.querySelector(".work-pin")) && workScroller) {
     intro("work", () => pageTop(workScroller));
     reel("work", workScroller, cards, describe);
     const end = work?.querySelector(".work-track-end");
     if (end)
       reel("work", workScroller, [end], () => `And that's just the highlights! We've shipped ${WORKS.length} products across web and mobile.`);
   } else {
+    /* phones: a swipeable row — scroll to it, then swipe to each card */
+    const track = work?.querySelector<HTMLElement>(".work-track");
     intro("work");
-    each("work", ".wf-card", describe);
+    for (const el of cards)
+      beats.push({
+        index: indexOf("work"),
+        y: () => pageTop(el, -140),
+        text: () => describe(el),
+        act: () => {
+          const c = el as HTMLElement;
+          track?.scrollTo({ left: c.offsetLeft - (track.clientWidth - c.offsetWidth) / 2, behavior: "smooth" });
+        },
+      });
   }
   beats.push({
     index: indexOf("work"),
@@ -95,7 +106,7 @@ export function buildBeats(): Beat[] {
   const procScroller = proc?.querySelector<HTMLElement>(".proc-scroller");
   const steps = Array.from(proc?.querySelectorAll(".proc-step") ?? []);
   const step = (el: Element) => `${read(el, ".proc-step-kicker").replace(" / 03", "")}: ${read(el, ".proc-step-title")}. ${read(el, ".proc-step-desc")}`;
-  if (isSticky(procScroller) && procScroller) {
+  if (isSticky(proc?.querySelector(".proc-pin")) && procScroller) {
     intro("process", () => pageTop(procScroller));
     reel("process", procScroller, steps, step);
   } else {
