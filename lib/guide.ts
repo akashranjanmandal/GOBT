@@ -83,3 +83,19 @@ export function explainMessage(value: string): string {
     return "Tell us a little about your project: what you want built, your timeline and a rough budget.";
   return `Just ${left} more character${left === 1 ? "" : "s"}, please. A line about your goals, timeline or budget is perfect.`;
 }
+
+/* ── Bloom filling in the contact form as a chat ── */
+export type GuideField = "name" | "email" | "company" | "message";
+
+export const EVT_GUIDE_FILL = "gobt:guide-fill";
+export const EVT_GUIDE_SUBMIT = "gobt:guide-submit";
+
+export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+export function guideFill(field: GuideField, value: string) {
+  window.dispatchEvent(new CustomEvent<{ field: GuideField; value: string }>(EVT_GUIDE_FILL, { detail: { field, value } }));
+}
+
+export function guideSubmit() {
+  window.dispatchEvent(new Event(EVT_GUIDE_SUBMIT));
+}

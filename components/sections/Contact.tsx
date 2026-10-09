@@ -6,7 +6,7 @@ import { EVT_PREFILL } from "@/lib/scroll";
 import { markup } from "@/lib/markup";
 import { IconCheck } from "@/components/ui/icons";
 import { track } from "@/lib/analytics";
-import { explainEmail, explainMessage, guideSay } from "@/lib/guide";
+import { EVT_GUIDE_FILL, EVT_GUIDE_SUBMIT, explainEmail, explainMessage, guideSay, type GuideField } from "@/lib/guide";
 
 type Field = "name" | "email" | "company" | "message";
 type Phase = "idle" | "sending" | "sent" | "error";
@@ -43,6 +43,24 @@ export default function Contact() {
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [phase, setPhase] = useState<Phase>("idle");
   const messageRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /* Bloom's chat fills the fields and sends the form for the visitor */
+  useEffect(() => {
+    const onFill = (e: Event) => {
+      const { field, value } = (e as CustomEvent<{ field: GuideField; value: string }>).detail;
+      setPhase("idle");
+      setForm((f) => ({ ...f, [field]: value }));
+      setErrors((er) => ({ ...er, [field]: undefined }));
+    };
+    const onSubmit = () => formRef.current?.requestSubmit();
+    window.addEventListener(EVT_GUIDE_FILL, onFill);
+    window.addEventListener(EVT_GUIDE_SUBMIT, onSubmit);
+    return () => {
+      window.removeEventListener(EVT_GUIDE_FILL, onFill);
+      window.removeEventListener(EVT_GUIDE_SUBMIT, onSubmit);
+    };
+  }, []);
 
   /* the estimator hands over its selection */
   useEffect(() => {
@@ -198,7 +216,7 @@ export default function Contact() {
               </button>
             </div>
           ) : (
-            <form className="cf-form" onSubmit={submit} noValidate>
+            <form className="cf-form" onSubmit={submit} noValidate ref={formRef}>
               <div className="cf-row">
                 {field("name", "Full name")}
                 {field("email", "Email address", "email")}

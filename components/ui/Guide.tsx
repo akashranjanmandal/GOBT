@@ -6,12 +6,35 @@ import {
   GUIDE_STOPS,
   GUIDE_SULKS,
   GUIDE_WELCOMES,
+  explainEmail,
+  explainMessage,
+  guideFill,
+  guideSubmit,
+  isEmail,
+  type GuideField,
   type GuideMessage,
   type GuideShape,
 } from "@/lib/guide";
-import { prefersReducedMotion } from "@/lib/scroll";
+import { getLenis, prefersReducedMotion } from "@/lib/scroll";
+import { createSpaceFinder, type Side } from "@/components/fx/freeSpace";
+import { buildBeats, type Beat } from "@/components/ui/tourBeats";
 
-type Phase = "hidden" | "on" | "angry" | "quiet";
+/* ask: offering the tour · tour: driving the page · offer: offering to
+   take a query at the contact form · chat: asking for it question by question */
+type Phase = "hidden" | "ask" | "tour" | "on" | "offer" | "chat" | "angry" | "quiet";
+type Step = GuideField | "confirm";
+
+const LAST = GUIDE_STOPS.length - 1;
+const ASK = "Hi, I'm Bloom! Want me to show you around? I'll swim through the whole page and explain everything.";
+const OFFER = "Want to send us a query? I can ask you a few quick questions and fill in the form for you!";
+const QUESTIONS: Record<Step, (name: string) => string> = {
+  name: () => "Yay! First things first, what's your name?",
+  email: (name) => `Nice to meet you, ${name.split(" ")[0]}! What's your email, so we can reply?`,
+  company: () => "Which company are you from? Tap “Skip” if it's just you.",
+  message: () => "Now the fun part: what would you like us to build? Goals, timeline, budget, anything helps!",
+  confirm: () => "All done! Shall I send this to the team?",
+};
+const NEXT: Record<GuideField, Step> = { name: "email", email: "company", company: "message", message: "confirm" };
 
 const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
@@ -90,7 +113,7 @@ function Typed({ text, onTalk }: { text: string; onTalk: (talking: boolean) => v
       return;
     }
     onTalk(true);
-    const id = window.setTimeout(() => setCount((n) => Math.min(text.length, n + 2)), 24);
+    const id = window.setTimeout(() => setCount((n) => Math.min(text.length, n + 3)), 18);
     return () => window.clearTimeout(id);
   }, [count, text, onTalk]);
 
@@ -117,13 +140,23 @@ export default function Guide({ active }: { active: boolean }) {
   const [index, setIndex] = useState(0);
   const [say, setSay] = useState<(GuideMessage & { seq: number }) | null>(null);
   const [line, setLine] = useState("");
+  const [step, setStep] = useState<Step>("name");
+  const [prompt, setPrompt] = useState({ text: "", worried: false, seq: 0 });
+  const [draft, setDraft] = useState("");
+  const [answers, setAnswers] = useState({ name: "" });
+  const offered = useRef(false);
+  const beats = useRef<Beat[]>([]);
+  const [beat, setBeat] = useState(0);
+  const [beatCount, setBeatCount] = useState(1);
+  const [tourText, setTourText] = useState({ text: "", seq: 0 });
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const seq = useRef(0);
   const live = useRef({ phase: "hidden" as Phase, index: 0, talking: false });
   useEffect(() => {
     live.current.phase = phase;
     live.current.index = index;
     /* form help and mood lines always get the bubble */
-    live.current.talking = !!say || phase === "angry";
+    live.current.talking = !!say;
   }, [phase, index, say]);
 
   const shown = phase !== "hidden";
@@ -144,7 +177,7 @@ export default function Guide({ active }: { active: boolean }) {
   /* every page load starts with Bloom awake, a beat after the loader */
   useEffect(() => {
     if (!active) return;
-    const t = window.setTimeout(() => setPhase("on"), 1000);
+    const t = window.setTimeout(() => setPhase("ask"), 1000);
     return () => window.clearTimeout(t);
   }, [active]);
 
@@ -156,6 +189,11 @@ export default function Guide({ active }: { active: boolean }) {
     let raf = 0;
     let settle = 0;
     const check = () => {
+      /* the tour picks the section itself */
+      if (live.current.phase === "tour") {
+        current = live.current.index;
+        return;
+      }
       const lineY = window.innerHeight * 0.45;
       let found = -1;
       sections.forEach((el, i) => {
@@ -168,12 +206,25 @@ export default function Guide({ active }: { active: boolean }) {
       current = found;
       setIndex(found);
       if (!first) pulse("is-morphing", 700);
+      /* reaching the contact section: offer to take the query as a chat */
+      if (found === LAST && live.current.phase === "on" && !offered.current) {
+        offered.current = true;
+        setPhase("offer");
+      }
     };
+    /* react while scrolling — checked at most every ~100ms */
+    let lastCheck = 0;
     const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        window.clearTimeout(settle);
-        settle = window.setTimeout(check, 220);
+      if (raf) return;
+      raf = requestAnimationFrame((now) => {
+        raf = 0;
+        if (now - lastCheck < 100) {
+          window.clearTimeout(settle);
+          settle = window.setTimeout(check, 110);
+          return;
+        }
+        lastCheck = now;
+        check();
       });
     };
     check();
@@ -234,7 +285,27 @@ export default function Guide({ active }: { active: boolean }) {
       anchorIndex: -1,
       ext: { right: 0, top: 0, bottom: 0 },
       measuredAt: 0,
+      /* the chosen spot, planned a few times a second and carried along
+         with the page in between */
+      tx: vw() / 2,
+      ty: vh() * 0.6,
+      tside: "none" as Side,
+      plannedAt: -Infinity,
+      planKey: "",
+      clearRuns: 0,
+      scrollY: window.scrollY,
     };
+    const finder = createSpaceFinder(() => [root, trail]);
+
+    /* hovering Bloom (or touching its bubble) pins it in place, so it can
+       be read and its buttons clicked */
+    let held = false;
+    const hold = () => (held = true);
+    const release = () => (held = false);
+    root.addEventListener("pointerenter", hold);
+    root.addEventListener("pointerleave", release);
+    root.addEventListener("focusin", hold);
+    root.addEventListener("focusout", release);
     let pointer: { x: number; y: number } | null = null;
     const onPointer = (e: PointerEvent) => {
       if (e.pointerType === "mouse") pointer = { x: e.clientX, y: e.clientY };
@@ -264,10 +335,32 @@ export default function Guide({ active }: { active: boolean }) {
       /* asleep or awake, it stays beside the section — asleep just means no bubble */
       {
         const stop = GUIDE_STOPS[L.index];
-        if (s.anchorIndex !== L.index || now - s.measuredAt > 700) {
-          s.anchor = document.querySelector(`#${stop.id} ${stop.anchor}`);
+        /* sit beside the section's heading while it's on screen; once it
+           scrolls away, beside whatever text of the section is being read */
+        const inView = (el: Element | null) => {
+          if (!el) return false;
+          const b = el.getBoundingClientRect();
+          return b.bottom > 96 && b.top < H * 0.78 && b.width > 0;
+        };
+        if (s.anchorIndex !== L.index || now - s.measuredAt > 300) {
+          const heading = document.querySelector(`#${stop.id} ${stop.anchor}`);
+          let next: Element | null = heading;
+          if (stop.place !== "above" && !inView(heading)) {
+            next = inView(s.anchor) && s.anchorIndex === L.index && s.anchor !== heading ? s.anchor : null;
+            if (!next) {
+              const section = document.getElementById(stop.id);
+              next =
+                Array.from(section?.querySelectorAll("h2, h3, h4, p, blockquote") ?? []).find((el) => {
+                  const b = el.getBoundingClientRect();
+                  return b.top > 100 && b.top < H * 0.62 && b.width > 0 && !!el.textContent?.trim() && !el.closest(".gd");
+                }) ?? heading;
+            }
+          }
+          if (next !== s.anchor || s.anchorIndex !== L.index || now - s.measuredAt > 700) {
+            s.anchor = next;
+            if (next) s.ext = measure(next);
+          }
           s.anchorIndex = L.index;
-          if (s.anchor) s.ext = measure(s.anchor);
           s.measuredAt = now;
         }
         const r = s.anchor?.getBoundingClientRect();
@@ -292,18 +385,59 @@ export default function Guide({ active }: { active: boolean }) {
           }
           side = tx + S / 2 + 14 + bw < W - 20 ? "right" : "left";
         }
-        /* once the heading has scrolled away, stop talking over the content */
-        if (r && r.top + ext.bottom < 96 && stop.place !== "above" && !L.talking) side = "none";
-        if (L.phase === "quiet") side = "none";
-        /* never leave the screen; ride the edge while the heading is away */
-        ty = Math.max(84 + S / 2, Math.min(H - S / 2 - 16 - (side === "none" ? 0 : Math.max(0, bh - S) / 2), ty));
+        ty = Math.max(84 + S / 2, Math.min(H - S / 2 - 16, ty));
         tx = Math.max(S / 2 + 12, Math.min(W - S / 2 - 12, tx));
       }
 
-      /* gentle wander so it never sits dead still */
-      if (!reduced) {
-        tx += Math.sin(t * 0.8) * 7 + Math.sin(t * 1.9) * 3;
-        ty += Math.sin(t * 1.1 + 1.3) * 6;
+      /* tx/ty above is only where Bloom would *like* to be. It never
+         sits on content: find the nearest empty spot for it and its
+         bubble; failing that, stay quiet in a gap; failing that, peek
+         in from the edge. When the visitor is talking to it (tour
+         question, chat, form help) it takes the least-covered spot. */
+      const scrolled = window.scrollY - s.scrollY;
+      s.scrollY = window.scrollY;
+      s.ty -= scrolled;
+      const key = `${L.phase}|${L.index}|${L.talking}|${small}`;
+      if (!held && (now - s.plannedAt > 240 || key !== s.planKey || Math.abs(scrolled) > 120)) {
+        s.plannedAt = now;
+        s.planKey = key;
+        const spots = finder.plan({
+          size: S,
+          bw,
+          bh,
+          top: 84,
+          px: tx,
+          py: ty,
+          prev: Number.isFinite(s.ty) ? { x: s.tx, y: s.ty, side: s.tside } : null,
+        });
+        const interactive =
+          L.talking || L.phase === "ask" || L.phase === "offer" || L.phase === "chat" || L.phase === "angry" || L.phase === "tour";
+        /* only start talking once a clear spot has stayed clear for a
+           couple of checks — moving content (the marquee) can't make the
+           bubble flicker on and off over it */
+        const talkFree = finder.isFree(spots.talk);
+        s.clearRuns = talkFree ? s.clearRuns + 1 : 0;
+        const canTalk = interactive || (talkFree && (s.tside !== "none" || s.clearRuns >= 2));
+        const spot =
+          L.phase !== "quiet" && canTalk
+            ? spots.talk
+            : finder.isFree(spots.quiet)
+              ? spots.quiet
+              : spots.peek;
+        s.tx = spot.x;
+        s.ty = spot.y;
+        s.tside = spot.side;
+        /* nowhere at all to be without covering something: fade out */
+        root.classList.toggle("is-away", spot === spots.peek && !finder.isFree(spots.peek));
+      }
+      tx = s.tx;
+      ty = s.ty;
+      side = s.tside === "none" ? "none" : s.tside;
+
+      /* gentle wander so it never sits dead still (not while held) */
+      if (!reduced && !held) {
+        tx += Math.sin(t * 0.8) * 3 + Math.sin(t * 1.9) * 1.5;
+        ty += Math.sin(t * 1.1 + 1.3) * 3;
       }
 
       /* underdamped spring = a soft, swimmy follow */
@@ -312,8 +446,8 @@ export default function Guide({ active }: { active: boolean }) {
         s.y = ty;
         s.vx = s.vy = 0;
       } else {
-        const k = 15;
-        const c = 6.2;
+        const k = held ? 40 : 22;
+        const c = held ? 12 : 7.6;
         s.vx += (k * (tx - s.x) - c * s.vx) * dt;
         s.vy += (k * (ty - s.y) - c * s.vy) * dt;
         s.x += s.vx * dt;
@@ -372,7 +506,7 @@ export default function Guide({ active }: { active: boolean }) {
         s.side = side;
         root.dataset.side = side;
       }
-      root.classList.toggle("is-swimming", speed > 420);
+      root.classList.toggle("is-swimming", speed > 2600);
 
       /* bubbles trail off its tail */
       s.history.unshift([s.x, s.y]);
@@ -388,8 +522,136 @@ export default function Guide({ active }: { active: boolean }) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onPointer);
+      root.removeEventListener("pointerenter", hold);
+      root.removeEventListener("pointerleave", release);
+      root.removeEventListener("focusin", hold);
+      root.removeEventListener("focusout", release);
+      finder.dispose();
     };
   }, [shown]);
+
+  /* ── the tour: Bloom drives the page beat by beat — glides to each
+     spot at a reading pace, then describes what's on screen there ── */
+  useEffect(() => {
+    if (phase !== "tour") return;
+    const b = beats.current[beat];
+    if (!b) {
+      const id = window.setTimeout(() => {
+        offered.current = true;
+        setPhase("offer");
+      }, 400);
+      return () => window.clearTimeout(id);
+    }
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const y = Math.max(0, Math.min(max, b.y()));
+    const dist = Math.abs(y - window.scrollY);
+    const duration = dist < 4 ? 0 : Math.max(0.9, Math.min(3.2, dist / 650));
+    if (duration) {
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(y, { duration, easing: (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2) });
+      else window.scrollTo({ top: y, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    }
+    let next = 0;
+    const arrive = window.setTimeout(() => {
+      const text = b.text();
+      setIndex((i) => {
+        if (i !== b.index) pulse("is-morphing", 700);
+        return b.index;
+      });
+      setTourText({ text, seq: ++seq.current });
+      /* time to type it out and read it */
+      next = window.setTimeout(() => setBeat((n) => n + 1), Math.min(8500, 1300 + text.length * 42));
+    }, duration * 1000 + 250);
+    return () => {
+      window.clearTimeout(arrive);
+      window.clearTimeout(next);
+    };
+  }, [phase, beat, pulse]);
+
+  /* the visitor grabbing the wheel ends the tour (or answers "no") */
+  useEffect(() => {
+    if (phase !== "tour" && phase !== "ask") return;
+    const takeOver = (e: Event) => {
+      if (e instanceof KeyboardEvent && !["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Home", "End"].includes(e.key)) return;
+      if (live.current.phase === "tour") {
+        getLenis()?.stop();
+        getLenis()?.start();
+        setSay({ text: "Okay, you drive! I'll keep chatting as you scroll.", mood: "happy", ttl: 3500, seq: ++seq.current });
+      }
+      setPhase("on");
+    };
+    window.addEventListener("wheel", takeOver, { passive: true });
+    window.addEventListener("touchmove", takeOver, { passive: true });
+    window.addEventListener("keydown", takeOver);
+    return () => {
+      window.removeEventListener("wheel", takeOver);
+      window.removeEventListener("touchmove", takeOver);
+      window.removeEventListener("keydown", takeOver);
+    };
+  }, [phase]);
+
+  const startTour = () => {
+    beats.current = buildBeats();
+    setBeatCount(beats.current.length);
+    setSay(null);
+    setBeat(0);
+    setTourText({ text: "Let's go! Follow me…", seq: ++seq.current });
+    setPhase("tour");
+    pulse("is-cheering", 1300);
+  };
+
+  const stopTour = () => {
+    setSay({ text: "No problem! Scroll on and I'll keep you company.", mood: "happy", ttl: 3500, seq: ++seq.current });
+    setPhase("on");
+  };
+
+  const ask = (next: Step, worried = false, text?: string) => {
+    setStep(next);
+    setPrompt({ text: text ?? QUESTIONS[next](answers.name), worried, seq: ++seq.current });
+    if (worried) pulse("is-shaking", 600);
+  };
+
+  const startChat = () => {
+    setPhase("chat");
+    setDraft("");
+    ask("name");
+    pulse("is-cheering", 1300);
+  };
+
+  const endChat = (text = "No worries! The form is right here whenever you're ready.") => {
+    setPhase("on");
+    setSay({ text, mood: "happy", ttl: 4000, seq: ++seq.current });
+  };
+
+  useEffect(() => {
+    if (phase === "chat" && step !== "confirm") inputRef.current?.focus({ preventScroll: true });
+  }, [phase, step, prompt.seq]);
+
+  const answer = (skip = false) => {
+    if (step === "confirm") return;
+    const value = skip ? "" : draft.trim();
+    if (step === "name" && !value) return ask("name", true, "Oops, I didn't catch that. What should we call you?");
+    if (step === "email" && !isEmail(value)) return ask("email", true, explainEmail(value));
+    if (step === "message" && value.length < 10) return ask("message", true, explainMessage(value));
+    guideFill(step, value);
+    if (step === "name") setAnswers({ name: value });
+    setDraft("");
+    const next = NEXT[step];
+    setStep(next);
+    setPrompt({ text: QUESTIONS[next](step === "name" ? value : answers.name), worried: false, seq: ++seq.current });
+    pulse("is-morphing", 700);
+  };
+
+  const send = () => {
+    setPhase("on");
+    /* the form's own success / failure lines take it from here */
+    window.setTimeout(guideSubmit, 60);
+  };
+
+  const editMyself = () => {
+    endChat("Sure! Everything's filled in below. Change anything you like, then hit Send.");
+    window.setTimeout(() => document.getElementById("cf-message")?.focus({ preventScroll: true }), 100);
+  };
 
   /* told to hush: a grumpy line, then it dozes off where it is */
   const hush = () => {
@@ -417,13 +679,34 @@ export default function Guide({ active }: { active: boolean }) {
 
   const stop = GUIDE_STOPS[index];
   const welcoming = !!say && say.text === "";
-  const text = phase === "angry" ? line : welcoming ? line : say ? say.text : stop.text;
+  const text =
+    phase === "angry" || welcoming
+      ? line
+      : phase === "ask"
+        ? ASK
+        : phase === "offer"
+          ? OFFER
+          : phase === "chat"
+            ? prompt.text
+            : phase === "tour"
+              ? tourText.text
+              : say
+              ? say.text
+              : stop.text;
   const face: Face =
     phase === "angry"
       ? "angry"
       : phase === "quiet"
         ? "sleepy"
-        : say
+        : phase === "ask" || phase === "offer"
+          ? "happy"
+          : phase === "chat"
+            ? prompt.worried
+              ? "worried"
+              : step === "confirm"
+                ? "star"
+                : "curious"
+            : say
           ? say.mood === "worried"
             ? "worried"
             : say.mood === "happy"
@@ -431,7 +714,18 @@ export default function Guide({ active }: { active: boolean }) {
               : stop.face
           : stop.face;
   const [eyes, mouth, brows] = FACES[face];
-  const key = phase === "angry" ? "angry" : say ? `say-${say.seq}` : `stop-${index}`;
+  const key =
+    phase === "angry" || phase === "ask" || phase === "offer"
+      ? phase
+      : phase === "chat"
+        ? `chat-${prompt.seq}`
+        : phase === "tour"
+          ? `tour-${tourText.seq}`
+          : say
+          ? `say-${say.seq}`
+          : `stop-${index}`;
+  const closeLabel = phase === "on" ? "Hush Bloom, the site guide" : phase === "tour" ? "Stop the tour" : "Close the chat";
+  const onClose = phase === "on" ? hush : phase === "tour" ? stopTour : () => endChat();
 
   return (
     <>
@@ -535,19 +829,97 @@ export default function Guide({ active }: { active: boolean }) {
         </button>
 
         <div className="gd-bubble" ref={bubbleRef} aria-hidden={phase === "quiet"} inert={phase === "quiet"}>
-          {phase === "on" && (
-            <button className="gd-close" onClick={hush} aria-label="Hush Bloom, the site guide">
+          {(phase === "on" || phase === "tour" || phase === "chat") && (
+            <button className="gd-close" onClick={onClose} aria-label={closeLabel}>
               <svg viewBox="0 0 12 12" aria-hidden="true">
                 <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" />
               </svg>
             </button>
           )}
+          {phase === "tour" && <span className="gd-label">Tour · {index + 1} of {GUIDE_STOPS.length}</span>}
           <div className="gd-msg" key={key}>
             <Typed text={text} onTalk={onTalk} />
           </div>
+
+          {phase === "tour" && (
+            <div className="gd-progress" aria-hidden="true">
+              <span style={{ transform: `scaleX(${Math.min(1, (beat + 1) / beatCount)})` }} />
+            </div>
+          )}
+
+          {phase === "ask" && (
+            <div className="gd-actions">
+              <button className="gd-btn gd-btn-gold" onClick={startTour}>
+                Yes, show me!
+              </button>
+              <button className="gd-btn" onClick={() => setPhase("on")}>
+                I&apos;ll explore
+              </button>
+            </div>
+          )}
+
+          {phase === "offer" && (
+            <div className="gd-actions">
+              <button className="gd-btn gd-btn-gold" onClick={startChat}>
+                Yes, let&apos;s chat
+              </button>
+              <button className="gd-btn" onClick={() => endChat()}>
+                I&apos;ll type it
+              </button>
+            </div>
+          )}
+
+          {phase === "chat" && step !== "confirm" && (
+            <form
+              className="gd-chat"
+              onSubmit={(e) => {
+                e.preventDefault();
+                answer();
+              }}
+            >
+              <textarea
+                ref={inputRef}
+                className="gd-input"
+                rows={step === "message" ? 3 : 1}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    answer();
+                  }
+                }}
+                placeholder={step === "email" ? "name@company.com" : step === "name" ? "Your name" : step === "company" ? "Company name" : "Type here…"}
+                aria-label={QUESTIONS[step](answers.name)}
+                inputMode={step === "email" ? "email" : "text"}
+                autoComplete={step === "name" ? "name" : step === "email" ? "email" : step === "company" ? "organization" : "off"}
+              />
+              <div className="gd-actions">
+                {step === "company" && (
+                  <button type="button" className="gd-btn" onClick={() => answer(true)}>
+                    Skip
+                  </button>
+                )}
+                <button type="submit" className="gd-btn gd-btn-gold">
+                  Next →
+                </button>
+              </div>
+            </form>
+          )}
+
+          {phase === "chat" && step === "confirm" && (
+            <div className="gd-actions">
+              <button className="gd-btn gd-btn-gold" onClick={send}>
+                Send it!
+              </button>
+              <button className="gd-btn" onClick={editMyself}>
+                Let me check
+              </button>
+            </div>
+          )}
           {/* screen readers hear form help and mood changes, not every section */}
           <span className="sr-only" role="status">
-            {phase === "angry" || welcoming ? line : say?.text}
+            {phase === "angry" || welcoming || phase === "ask" || phase === "offer" || phase === "chat" ? text : say?.text}
           </span>
         </div>
       </div>

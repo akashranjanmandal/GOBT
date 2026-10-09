@@ -5349,6 +5349,19 @@ html.is-booted .hud {
   will-change: transform;
 }
 
+.gd {
+  transition: opacity 0.4s;
+}
+
+.gd.is-away {
+  opacity: 0;
+}
+
+.gd.is-away .gd-blob,
+.gd.is-away .gd-bubble {
+  pointer-events: none;
+}
+
 html.is-locked .gd,
 html.is-locked .gd-trail {
   opacity: 0;
@@ -5782,14 +5795,129 @@ html.is-locked .gd-trail {
   outline-offset: 1px;
 }
 
+/* tour + chat controls inside the bubble */
+.gd-label {
+  display: block;
+  margin: 0 1.4rem 0.3rem 0;
+  font-family: var(--f-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.gd-progress {
+  height: 2px;
+  margin-top: 0.7rem;
+  border-radius: 2px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.gd-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi));
+  transform-origin: left;
+  transition: transform 0.6s var(--ease-out);
+}
+
+.gd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.gd-btn {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s var(--ease-out);
+}
+
+.gd-btn:hover,
+.gd-btn:focus-visible {
+  border-color: var(--gold);
+  background: rgba(231, 181, 60, 0.1);
+}
+
+.gd-btn:active {
+  transform: scale(0.95);
+}
+
+.gd-btn-gold {
+  border-color: transparent;
+  background: linear-gradient(100deg, #c99628, #f0c24e 45%, #ffe08a);
+  color: #1a1206;
+  font-weight: 600;
+}
+
+.gd-btn-gold:hover,
+.gd-btn-gold:focus-visible {
+  border-color: transparent;
+  background: linear-gradient(100deg, #d9a634, #ffd466 45%, #fff1b5);
+}
+
+.gd-chat {
+  margin-top: 0.65rem;
+}
+
+.gd-input {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: rgba(245, 238, 219, 0.04);
+  color: var(--ink);
+  font-family: var(--f-sans);
+  font-size: 16px;
+  line-height: 1.4;
+  resize: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.gd-input::placeholder {
+  color: var(--ink-4);
+}
+
+.gd-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: rgba(231, 181, 60, 0.06);
+}
+
+.gd[data-face="worried"] .gd-input {
+  border-color: rgba(255, 122, 92, 0.6);
+}
+
+.gd.is-chat .gd-bubble {
+  width: 300px;
+}
+
 @media (max-width: 700px) {
   .gd {
     --size: 64px;
   }
 
   .gd-bubble {
+    width: min(236px, calc(100vw - var(--size) - 42px));
+  }
+
+  .gd.is-chat .gd-bubble,
+  .gd.is-ask .gd-bubble,
+  .gd.is-offer .gd-bubble {
     width: calc(100vw - var(--size) - 42px);
     max-width: 320px;
+  }
+
+  .gd-bubble {
     padding: 0.6rem 1.9rem 0.65rem 0.8rem;
     border-radius: 14px;
   }
