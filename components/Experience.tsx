@@ -7,6 +7,7 @@ import { gsap, ScrollTrigger, SplitText, useGSAP, MQ_MOTION } from "@/lib/gsap";
 import { EVT_INTRO, getLenis, introState, prefersReducedMotion, scrollToTarget, setLenis } from "@/lib/scroll";
 import Nav from "@/components/ui/Nav";
 import Hud from "@/components/ui/Hud";
+import Guide from "@/components/ui/Guide";
 import Magnetic from "@/components/fx/Magnetic";
 import { createLogoLoader } from "@/components/fx/logoLoader";
 
@@ -207,6 +208,7 @@ export default function Experience({ children }: { children: ReactNode }) {
       <Nav />
       <main id="main">{children}</main>
       <Hud />
+      <Guide active={booted} />
       <Magnetic />
       <div className="grain" aria-hidden="true" />
     </>

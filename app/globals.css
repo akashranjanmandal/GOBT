@@ -5331,3 +5331,480 @@ html.is-booted .hud {
     display: none;
   }
 }
+
+/* ============================================================
+   GUIDE — Bloom, a gooey gold creature that swims around the
+   homepage. Position, outline and gaze are driven from JS.
+============================================================ */
+.gd {
+  --size: 96px;
+  --ink-face: #2b1a06;
+  position: fixed;
+  z-index: 60;
+  left: 0;
+  top: 0;
+  width: var(--size);
+  height: var(--size);
+  pointer-events: none;
+  will-change: transform;
+}
+
+html.is-locked .gd,
+html.is-locked .gd-trail {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.gd-blob {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.gd-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 8px 18px rgba(231, 181, 60, 0.38)) drop-shadow(0 0 2px rgba(255, 224, 138, 0.5));
+  transition: filter 0.5s;
+}
+
+.gd-shine {
+  fill: rgba(255, 255, 255, 0.6);
+}
+
+.gd-shine2 {
+  fill: rgba(255, 255, 255, 0.75);
+}
+
+/* hover: a little jiggle */
+.gd-blob:hover .gd-svg {
+  animation: gd-jiggle 0.6s var(--ease-out);
+}
+
+@keyframes gd-jiggle {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.12, 0.9); }
+  50% { transform: scale(0.94, 1.08); }
+  75% { transform: scale(1.04, 0.97); }
+}
+
+/* a squash-and-pop each time it reaches a new section */
+.gd.is-morphing .gd-svg {
+  animation: gd-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes gd-pop {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.82, 1.16); }
+  65% { transform: scale(1.1, 0.92); }
+  100% { transform: scale(1); }
+}
+
+.gd.is-cheering .gd-svg {
+  animation: gd-hop 0.65s var(--ease-out) 2;
+}
+
+@keyframes gd-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(3px) scale(1.12, 0.88); }
+  55% { transform: translateY(-14px) scale(0.92, 1.1); }
+}
+
+.gd.is-shaking .gd-svg {
+  animation: gd-shake 0.5s ease-in-out;
+}
+
+@keyframes gd-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-7deg); }
+  80% { transform: rotate(4deg); }
+}
+
+/* ── face parts: everything hidden until the face asks for it ── */
+.gd-e,
+.gd-m,
+.gd-b,
+.gd-m-talk {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gd-e ellipse,
+.gd-e path:not(.gd-stroke),
+.gd-m-open,
+.gd-m-o,
+.gd-m-talk {
+  fill: var(--ink-face);
+}
+
+.gd-glint {
+  fill: #fff;
+}
+
+.gd-e-heart path {
+  fill: #ff4f7a;
+}
+
+.gd-e-star path {
+  fill: var(--ink-face);
+}
+
+.gd-stroke,
+.gd-b {
+  fill: none;
+  stroke: var(--ink-face);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gd-b {
+  stroke-width: 2.4;
+}
+
+.gd-cheek {
+  fill: rgba(255, 105, 120, 0.5);
+  transition: fill 0.3s;
+}
+
+.gd-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gd-blink 4.4s infinite;
+}
+
+@keyframes gd-blink {
+  0%, 91%, 97%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.08); }
+}
+
+.gd-e-heart,
+.gd-e-star {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gd-throb 0.9s ease-in-out infinite;
+}
+
+@keyframes gd-throb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+
+.gd[data-eyes="round"] .gd-e-round,
+.gd[data-eyes="big"] .gd-e-big,
+.gd[data-eyes="happy"] .gd-e-happy,
+.gd[data-eyes="wink"] .gd-e-wink,
+.gd[data-eyes="heart"] .gd-e-heart,
+.gd[data-eyes="star"] .gd-e-star,
+.gd[data-eyes="narrow"] .gd-e-narrow,
+.gd[data-eyes="sleepy"] .gd-e-sleepy,
+.gd[data-mouth="smile"] .gd-m-smile,
+.gd[data-mouth="open"] .gd-m-open,
+.gd[data-mouth="small"] .gd-m-small,
+.gd[data-mouth="o"] .gd-m-o,
+.gd[data-mouth="flat"] .gd-m-flat,
+.gd[data-mouth="cat"] .gd-m-cat,
+.gd[data-mouth="wavy"] .gd-m-wavy,
+.gd[data-mouth="frown"] .gd-m-frown,
+.gd[data-brows="worried"] .gd-b-worried,
+.gd[data-brows="angry"] .gd-b-angry,
+.gd[data-brows="focused"] .gd-b-focused {
+  opacity: 1;
+}
+
+/* talking: a little round mouth chatters while the words type out */
+.gd.is-talking:not([data-face="angry"]):not([data-face="worried"]) .gd-m {
+  opacity: 0;
+}
+
+.gd.is-talking:not([data-face="angry"]):not([data-face="worried"]) .gd-m-talk {
+  opacity: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gd-talk 0.19s ease-in-out infinite alternate;
+}
+
+@keyframes gd-talk {
+  from { transform: scale(1.1, 0.3); }
+  to { transform: scale(0.9, 1.15); }
+}
+
+/* angry: goes red-hot, steams and fumes */
+.gd[data-face="angry"] .gd-svg {
+  filter: hue-rotate(-28deg) saturate(1.6) drop-shadow(0 8px 18px rgba(255, 91, 74, 0.55));
+  animation: gd-fume 0.16s linear infinite;
+}
+
+.gd[data-face="angry"] .gd-cheek {
+  fill: rgba(220, 30, 40, 0.65);
+}
+
+@keyframes gd-fume {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(1.5px); }
+}
+
+.gd-steam {
+  position: absolute;
+  top: 4%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(245, 238, 219, 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gd-steam.p1 { left: 14%; }
+.gd-steam.p2 { right: 14%; animation-delay: 0.35s !important; }
+
+.gd[data-face="angry"] .gd-steam {
+  animation: gd-steam 0.8s ease-out infinite;
+}
+
+@keyframes gd-steam {
+  0% { opacity: 0.9; transform: translateY(8px) scale(0.4); }
+  100% { opacity: 0; transform: translateY(-20px) scale(1.6); }
+}
+
+/* ── quiet: dozing beside the section, tap to wake ── */
+.gd.is-quiet .gd-blob {
+  scale: 0.8;
+  cursor: pointer;
+}
+
+.gd.is-quiet .gd-svg {
+  filter: drop-shadow(0 6px 14px rgba(231, 181, 60, 0.3)) saturate(0.85);
+  animation: gd-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes gd-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06, 0.95); }
+}
+
+.gd.is-quiet .gd-blob:hover .gd-svg,
+.gd.is-quiet .gd-blob:focus-visible .gd-svg {
+  animation: gd-jiggle 0.6s var(--ease-out);
+}
+
+.gd-blob:focus-visible {
+  outline: 2px solid var(--gold-hi);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.gd-zz {
+  position: absolute;
+  right: -2px;
+  top: -10px;
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gold-hi);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gd-zz i {
+  display: inline-block;
+  font-style: normal;
+  font-size: 11px;
+  transform: translate(2px, -9px);
+}
+
+.gd.is-quiet .gd-zz {
+  animation: gd-zz 2.6s ease-in-out infinite;
+}
+
+@keyframes gd-zz {
+  0% { opacity: 0; transform: translate(0, 8px) scale(0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(10px, -16px) scale(1.1); }
+}
+
+/* ── trail of little bubbles while it swims ── */
+.gd-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+}
+
+.gd-trail span {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c4, #e7a92c 60%, rgba(168, 118, 26, 0.4));
+  box-shadow: 0 0 10px rgba(231, 181, 60, 0.5);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ── speech bubble, beside the creature ── */
+.gd-bubble {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 14px);
+  width: 270px;
+  padding: 0.8rem 2.1rem 0.85rem 1rem;
+  border: 1px solid var(--line-2);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(231, 181, 60, 0.13), transparent 60%),
+    rgb(12, 9, 6);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 224, 138, 0.08);
+  pointer-events: auto;
+  translate: 0 -50%;
+  transform-origin: 0% 50%;
+  transition:
+    opacity 0.3s,
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    visibility 0s,
+    border-color 0.3s;
+}
+
+.gd[data-side="left"] .gd-bubble {
+  left: auto;
+  right: calc(100% + 14px);
+  transform-origin: 100% 50%;
+}
+
+/* the tail points at the creature */
+.gd-bubble::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-left: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+  background: rgb(12, 9, 6);
+  transform: rotate(45deg);
+  transition: border-color 0.3s;
+}
+
+.gd[data-side="left"] .gd-bubble::after {
+  left: auto;
+  right: -7px;
+  transform: rotate(-135deg);
+}
+
+/* tucked away mid-swim and while asleep */
+.gd.is-swimming .gd-bubble,
+.gd.is-quiet .gd-bubble,
+.gd[data-side="none"] .gd-bubble,
+.gd:not([data-side]) .gd-bubble {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.gd.is-quiet .gd-bubble {
+  visibility: hidden;
+  transition: opacity 0.3s, transform 0.3s, visibility 0s 0.3s;
+}
+
+.gd[data-face="angry"] .gd-bubble,
+.gd[data-face="angry"] .gd-bubble::after,
+.gd[data-face="worried"] .gd-bubble,
+.gd[data-face="worried"] .gd-bubble::after {
+  border-color: rgba(255, 122, 92, 0.55);
+}
+
+.gd-msg {
+  animation: gd-msg 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes gd-msg {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.gd-text {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.gd[data-face="angry"] .gd-text { color: #ffcfc2; }
+
+.gd-ghost { color: transparent; }
+
+.gd-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s var(--ease-out);
+}
+
+.gd-close svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.gd-close:hover,
+.gd-close:focus-visible {
+  background: rgba(255, 122, 92, 0.14);
+  color: #ffb199;
+  transform: rotate(90deg);
+}
+
+.gd-close:focus-visible {
+  outline: 2px solid var(--gold-hi);
+  outline-offset: 1px;
+}
+
+@media (max-width: 700px) {
+  .gd {
+    --size: 64px;
+  }
+
+  .gd-bubble {
+    width: calc(100vw - var(--size) - 42px);
+    max-width: 320px;
+    padding: 0.6rem 1.9rem 0.65rem 0.8rem;
+    border-radius: 14px;
+  }
+
+  .gd-text {
+    font-size: 0.78rem;
+    line-height: 1.42;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gd *,
+  .gd *::after {
+    animation: none !important;
+  }
+
+  .gd-trail { display: none; }
+}

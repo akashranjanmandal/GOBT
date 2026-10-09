@@ -6,11 +6,23 @@ import { EVT_PREFILL } from "@/lib/scroll";
 import { markup } from "@/lib/markup";
 import { IconCheck } from "@/components/ui/icons";
 import { track } from "@/lib/analytics";
+import { explainEmail, explainMessage, guideSay } from "@/lib/guide";
 
 type Field = "name" | "email" | "company" | "message";
 type Phase = "idle" | "sending" | "sent" | "error";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const fieldOk = (k: Field, v: string) =>
+  k === "name" ? !!v.trim() : k === "email" ? EMAIL_RE.test(v.trim()) : k === "message" ? v.trim().length >= 10 : true;
+
+/* what the guide says about a field that isn't right yet */
+const explain = (k: Field, v: string) =>
+  k === "name"
+    ? "I need your name so we know who we're replying to. Your full name is perfect."
+    : k === "email"
+      ? explainEmail(v)
+      : explainMessage(v);
 
 function validate(form: Record<Field, string>) {
   const errors: Partial<Record<Field, string>> = {};
@@ -19,6 +31,12 @@ function validate(form: Record<Field, string>) {
   if (form.message.trim().length < 10) errors.message = "A line or two about the project, please";
   return errors;
 }
+
+const SEND_FAILED = {
+  text: "Hmm, that didn't send. Please try again, or message us on WhatsApp and we'll reply quickly.",
+  mood: "worried" as const,
+  ttl: 9000,
+};
 
 export default function Contact() {
   const [form, setForm] = useState<Record<Field, string>>({ name: "", email: "", company: "", message: "" });
@@ -44,15 +62,30 @@ export default function Contact() {
   }, []);
 
   const set = (k: Field) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((f) => ({ ...f, [k]: e.target.value }));
-    if (errors[k]) setErrors((er) => ({ ...er, [k]: undefined }));
+    const v = e.target.value;
+    setForm((f) => ({ ...f, [k]: v }));
+    if (errors[k]) {
+      setErrors((er) => ({ ...er, [k]: undefined }));
+      if (fieldOk(k, v)) guideSay({ text: "Perfect, that looks right!", mood: "happy", ttl: 2200 });
+    }
+  };
+
+  /* a typo in the email gets explained as soon as the visitor moves on */
+  const onBlur = (k: Field) => () => {
+    const v = form[k];
+    if (k === "email" && v.trim() && !fieldOk(k, v)) guideSay({ text: explainEmail(v), mood: "worried", ttl: 9000 });
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const found = validate(form);
     setErrors(found);
-    if (Object.keys(found).length) return;
+    const first = (["name", "email", "message"] as const).find((k) => found[k]);
+    if (first) {
+      guideSay({ text: explain(first, form[first]), mood: "worried", ttl: 9000 });
+      document.getElementById(`cf-${first}`)?.focus({ preventScroll: true });
+      return;
+    }
     setPhase("sending");
     try {
       const res = await fetch("/api/contact", {
@@ -61,9 +94,13 @@ export default function Contact() {
         body: JSON.stringify(form),
       });
       setPhase(res.ok ? "sent" : "error");
-      if (res.ok) track("generate_lead", { form: "contact" });
+      if (res.ok) {
+        track("generate_lead", { form: "contact" });
+        guideSay({ text: "Message sent! We'll get back to you within 24 hours.", mood: "happy", ttl: 6000 });
+      } else guideSay(SEND_FAILED);
     } catch {
       setPhase("error");
+      guideSay(SEND_FAILED);
     }
   };
 
@@ -74,6 +111,7 @@ export default function Contact() {
         type={type}
         value={form[k]}
         onChange={set(k)}
+        onBlur={onBlur(k)}
         autoComplete={k === "name" ? "name" : k === "email" ? "email" : k === "company" ? "organization" : "off"}
         aria-invalid={!!errors[k]}
         aria-describedby={errors[k] ? `cf-${k}-err` : undefined}
