@@ -523,6 +523,57 @@ html.is-booted .hud {
   overflow: clip;
 }
 
+/* tricolour wash: three blurred bands of light, saffron above, a white
+   haze through the middle, green below, drifting like cloth in a breeze */
+.hero-tri {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 78%, transparent 100%);
+}
+
+.tri-band {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 34%;
+  border-radius: 50%;
+  filter: blur(60px);
+  transform-origin: 50% 50%;
+  animation: tri-wave 16s ease-in-out infinite;
+}
+
+.tri-saffron {
+  top: 6%;
+  background: radial-gradient(ellipse 60% 70% at 30% 50%, rgba(255, 140, 40, 0.22), transparent 70%);
+}
+
+.tri-white {
+  top: 34%;
+  background: radial-gradient(ellipse 55% 60% at 50% 50%, rgba(255, 250, 240, 0.065), transparent 70%);
+  animation-delay: -5.3s;
+}
+
+.tri-green {
+  top: 62%;
+  background: radial-gradient(ellipse 60% 70% at 66% 50%, rgba(19, 136, 8, 0.2), transparent 70%);
+  animation-delay: -10.6s;
+}
+
+@keyframes tri-wave {
+  0%, 100% { transform: translate3d(0, 0, 0) skewY(0deg); }
+  25% { transform: translate3d(3%, -4%, 0) skewY(-1.5deg); }
+  50% { transform: translate3d(0, 3%, 0) skewY(1deg); }
+  75% { transform: translate3d(-3%, -2%, 0) skewY(-0.6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tri-band { animation: none; }
+}
+
 .hero-fx {
   position: absolute;
   right: 2vw;
@@ -586,6 +637,30 @@ html.is-booted .hud {
   stroke: var(--gold-hi);
   stroke-width: 0.6;
   filter: drop-shadow(0 0 6px rgba(231, 181, 60, 0.6));
+}
+
+/* circumference 2π·13.6 ≈ 85.45; each coloured arc spans a third */
+.seal-tri {
+  fill: none;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.seal-tri-w {
+  stroke: rgba(255, 252, 245, 0.85);
+}
+
+.seal-tri-s,
+.seal-tri-g {
+  stroke-dasharray: 28.48 85.45;
+}
+
+.seal-tri-s {
+  stroke: #ff9933;
+}
+
+.seal-tri-g {
+  stroke: #138808;
 }
 
 .seal-check {

@@ -60,6 +60,8 @@ export function createSpaceFinder(exclude: () => Element[]) {
     const W = window.innerWidth;
     for (const el of Array.from(main.querySelectorAll("*"))) {
       if (skip.some((x) => x.contains(el))) continue;
+      /* purely decorative washes and glows aren't content */
+      if (el.closest("[data-decor]")) continue;
       if (el instanceof HTMLElement && el.dataset.fx !== undefined) {
         softs.push(el);
         continue;

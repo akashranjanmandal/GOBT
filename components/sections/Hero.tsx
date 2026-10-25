@@ -103,6 +103,14 @@ export default function Hero() {
 
   return (
     <section id="home" className="hero" ref={root}>
+      {/* A soft saffron–white–green wash: the tricolour's colours as light,
+          deliberately not the flag itself (no flag shape, no Chakra). */}
+      <div className="hero-tri" data-decor aria-hidden="true">
+        <span className="tri-band tri-saffron" />
+        <span className="tri-band tri-white" />
+        <span className="tri-band tri-green" />
+      </div>
+
       <div className="hero-fx" data-fx="gear" data-fx-opacity="1" data-fx-opacity-sm="0.6" aria-hidden="true" />
 
       <div className="hero-frame" aria-hidden="true">
@@ -116,6 +124,10 @@ export default function Hero() {
         <div className="hero-badge">
           <span className="hero-badge-seal" aria-hidden="true">
             <svg viewBox="0 0 24 24">
+              {/* tricolour ring: saffron arc above, green below, white between */}
+              <circle className="seal-tri seal-tri-w" cx="12" cy="12" r="13.6" />
+              <circle className="seal-tri seal-tri-s" cx="12" cy="12" r="13.6" transform="rotate(210 12 12)" />
+              <circle className="seal-tri seal-tri-g" cx="12" cy="12" r="13.6" transform="rotate(30 12 12)" />
               <path d={SEAL} className="seal-rim" />
               <path d="M8.2 12.3l2.6 2.6 5-5.2" className="seal-check" />
             </svg>
