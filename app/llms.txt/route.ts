@@ -27,6 +27,7 @@ export function GET() {
     "## More",
     "",
     `- [Software development in Kolkata](${SITE.url}/kolkata)`,
+    `- [Careers](${SITE.url}/careers)`,
     `- [Contact](${SITE.url}/#contact)`,
     "",
   ].join("\n");

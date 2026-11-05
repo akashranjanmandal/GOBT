@@ -18,6 +18,7 @@ export const NAV_ITEMS = [
 
 export const CONTACT = {
   email: "info@gobt.in",
+  careers: "career@gobt.in",
   whatsapp: "https://wa.me/918972297093",
   location: "Kolkata, India",
   coords: "22.5726° N · 88.3639° E",
@@ -418,6 +419,8 @@ export type Job = {
   type: string;
   location: string;
   description: string;
+  /* kept in the data but not shown anywhere on the site */
+  hidden?: boolean;
 };
 
 export const JOBS: Job[] = [
@@ -522,6 +525,7 @@ export const JOBS: Job[] = [
   },
   {
     id: "blockchain",
+    hidden: true,
     title: "Blockchain Developer",
     experience: "3+ Years",
     type: "Full-Time",
@@ -557,6 +561,12 @@ export const JOBS: Job[] = [
     `,
   },
 ];
+
+export const OPEN_JOBS = JOBS.filter((job) => !job.hidden);
+
+/* applications are by email only */
+export const applyMailto = (title: string) =>
+  `mailto:${CONTACT.careers}?subject=${encodeURIComponent(`Application — ${title}`)}`;
 
 /* One-line descriptors and tags give each capability something to
    say when it takes the spotlight in the orbit; they are drawn from

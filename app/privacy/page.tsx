@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalPage from "@/components/ui/LegalPage";
+import { CONTACT } from "@/lib/content";
 import { SITE } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Privacy() {
   return (
-    <LegalPage title="Privacy Policy" updated="2 October 2026">
+    <LegalPage title="Privacy Policy" updated="5 November 2026">
       <p>
         This policy explains how {SITE.legalName} (&ldquo;GOBT&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), based in {SITE.city},{" "}
         {SITE.region}, India, handles personal information collected through {SITE.url.replace("https://", "")}.
@@ -20,6 +21,13 @@ export default function Privacy() {
         When you use our contact form we collect the details you enter: your name, email address, company name (optional)
         and your message. If you email or message us on WhatsApp, we receive the details you send. If analytics are enabled
         on the site, we also collect anonymous usage data such as pages visited, device type and approximate location.
+      </p>
+      <h2>Job applications</h2>
+      <p>
+        If you apply for a role by emailing <a href={`mailto:${CONTACT.careers}`}>{CONTACT.careers}</a>, we receive your CV and
+        anything else you send, such as your contact details and work history. We use this only to assess your application
+        and contact you about it. We keep it for as long as needed for hiring, then delete it. You can ask us to delete it
+        sooner at any time.
       </p>
       <h2>How we use it</h2>
       <ul>

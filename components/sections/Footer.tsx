@@ -134,8 +134,8 @@ export default function Footer() {
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.id}
-                href={`/#${item.id}`}
-                onClick={(e) => onSectionLink(e, `#${item.id}`)}
+                href={item.id === "careers" ? "/careers" : `/#${item.id}`}
+                onClick={item.id === "careers" ? undefined : (e) => onSectionLink(e, `#${item.id}`)}
               >
                 {item.label}
               </Link>

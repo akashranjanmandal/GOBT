@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useIsClient } from "@/lib/useIsClient";
-import { CONTACT, JOBS, type Job } from "@/lib/content";
+import { OPEN_JOBS, applyMailto, type Job } from "@/lib/content";
 import { lockScroll } from "@/lib/scroll";
 import SectionHead from "@/components/ui/SectionHead";
 import { IconArrow } from "@/components/ui/icons";
@@ -54,7 +55,7 @@ function Drawer({ job, onClose }: { job: Job | null; onClose: () => void }) {
             <footer className="drawer-foot">
               <a
                 className="btn btn-gold btn-lg"
-                href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`Application — ${shown.title}`)}`}
+                href={applyMailto(shown.title)}
                 data-magnetic
               >
                 <span className="btn-label">Apply now</span>
@@ -86,12 +87,12 @@ export default function Careers() {
         <div className="careers-head">
           <SectionHead title="We’re *hiring.*" lede="Join a small team building deep-tech products for real businesses." />
           <span className="careers-badge" data-reveal="fade">
-            {JOBS.length} open roles
+            {OPEN_JOBS.length} open roles
           </span>
         </div>
 
         <ul className="jobs" data-reveal="stagger">
-          {JOBS.map((job) => (
+          {OPEN_JOBS.map((job) => (
             <li key={job.id}>
               <button
                 className="job"
@@ -114,6 +115,9 @@ export default function Careers() {
             </li>
           ))}
         </ul>
+        <Link href="/careers" className="careers-all">
+          See all roles and how to apply →
+        </Link>
       </div>
       {isClient && createPortal(<Drawer job={active} onClose={close} />, document.body)}
     </section>

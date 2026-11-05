@@ -4016,6 +4016,14 @@ html.is-booted .hud {
   gap: 2rem;
 }
 
+.careers-all {
+  display: inline-block;
+  margin-top: 1.6rem;
+  color: var(--gold-hi);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .careers-badge {
   display: inline-flex;
   align-items: center;
@@ -5286,6 +5294,88 @@ html.is-booted .hud {
   margin-top: 0.7rem;
   font-size: 0.9rem;
   color: var(--gold-hi);
+}
+
+/* ── careers page ── */
+.cp-apply {
+  max-width: 760px;
+  color: var(--ink-2);
+  line-height: 1.8;
+}
+
+.cp-apply a {
+  color: var(--gold-hi);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cp-apply ol {
+  margin: 0.8rem 0 0;
+  padding-left: 1.2rem;
+  list-style: decimal;
+}
+
+.cp-role .job {
+  list-style: none;
+  cursor: pointer;
+}
+
+.cp-role .job::-webkit-details-marker {
+  display: none;
+}
+
+.cp-role .job-arrow {
+  transition: transform 0.3s var(--ease-out);
+}
+
+.cp-role[open] .job-arrow {
+  transform: rotate(90deg);
+}
+
+/* no gold sweep on an open role, or stuck on after a tap */
+.cp-role[open] .job::before {
+  display: none;
+}
+
+.cp-role[open] .job .job-title {
+  color: var(--ink);
+}
+
+.cp-role[open] .job .job-arrow {
+  color: var(--gold);
+}
+
+.cp-role[open] .job .job-meta span {
+  color: var(--ink-2);
+  border-color: var(--line-2);
+}
+
+@media (hover: none) {
+  .cp-role .job::before {
+    display: none;
+  }
+
+  .cp-role .job .job-title {
+    color: var(--ink);
+  }
+
+  .cp-role .job .job-arrow {
+    color: var(--gold);
+  }
+
+  .cp-role .job .job-meta span {
+    color: var(--ink-2);
+    border-color: var(--line-2);
+  }
+}
+
+.cp-role .drawer-body {
+  max-width: 820px;
+  padding: 1.4rem 0 0.6rem;
+}
+
+.cp-role-apply {
+  margin: 0.6rem 0 2rem;
 }
 
 /* ── legal pages + 404 ── */
