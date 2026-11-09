@@ -140,6 +140,7 @@ export default function Footer() {
                 {item.label}
               </Link>
             ))}
+            <Link href="/academy">Academy</Link>
           </div>
         </nav>
         <div className="fg-col">

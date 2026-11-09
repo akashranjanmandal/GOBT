@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE.url, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE.url}/kolkata`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE.url}/academy`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE.url}/careers`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     ...SERVICE_PAGES.map((s) => ({
       url: `${SITE.url}${servicePath(s.slug)}`,

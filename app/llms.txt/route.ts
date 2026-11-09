@@ -27,6 +27,7 @@ export function GET() {
     "## More",
     "",
     `- [Software development in Kolkata](${SITE.url}/kolkata)`,
+    `- [GOBT Robotics & AI Academy: robotics, Arduino, Python/AI and IoT courses for school students in Falta](${SITE.url}/academy)`,
     `- [Careers](${SITE.url}/careers)`,
     `- [Contact](${SITE.url}/#contact)`,
     "",

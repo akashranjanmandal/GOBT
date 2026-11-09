@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Unbounded } from "next/font/google";
+import { JetBrains_Mono, Noto_Sans_Bengali, Unbounded } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { KEYWORDS, SITE } from "@/lib/seo";
@@ -7,6 +7,8 @@ import Analytics from "@/components/Analytics";
 
 const display = Unbounded({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+/* Bengali text (the academy page); not preloaded, so it only downloads where Bengali appears */
+const bengali = Noto_Sans_Bengali({ subsets: ["bengali"], variable: "--font-bn", display: "swap", preload: false });
 const sans = localFont({
   src: [
     { path: "../public/fonts/GoogleSans-Variable.ttf", style: "normal", weight: "100 900" },
@@ -77,7 +79,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-IN" className={`${display.variable} ${mono.variable} ${sans.variable}`} suppressHydrationWarning>
+    <html lang="en-IN" className={`${display.variable} ${mono.variable} ${sans.variable} ${bengali.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
         <Analytics />

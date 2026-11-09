@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { MAIL_FROM, mailer } from '@/lib/mailer';
 
 export async function POST(req: Request) {
   try {
@@ -9,16 +9,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'souvikghoshkalna@gmail.com',
-        pass: 'vbeemyudmwfbbnfl',
-      },
-    });
-
+    
     const mailOptions = {
-      from: `"GOBT Website" <${process.env.EMAIL_USER}>`,
+      from: MAIL_FROM,
       to: 'info@gobt.in',
       replyTo: email,
       subject: `New Project Inquiry from ${name} (${company || 'No Company'})`,
@@ -58,7 +51,7 @@ export async function POST(req: Request) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    await mailer.sendMail(mailOptions);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
