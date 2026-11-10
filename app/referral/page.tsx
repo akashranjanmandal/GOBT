@@ -20,7 +20,7 @@ const FAQS = [
   { q: "Who can join?", a: "Anyone in India aged 18 or over with a UPI ID. Students, freelancers, shop owners, teachers, CAs, anyone who knows people who need software." },
   { q: "Do I need to sell anything?", a: "No. You just introduce us. Our team does the calls, proposals and the work. You only share contacts of people who actually need something built." },
   { q: `How is the ${pct}% calculated?`, a: `On the money the client actually pays us, for the project you referred. If they pay in parts, you earn ${pct}% of each part as it clears.` },
-  { q: "When do I get paid?", a: `Commission is paid by UPI after the client's payment clears, usually within the month. The minimum payout is ${inr(REFERRAL.minPayout)}.` },
+  { q: "When do I get paid?", a: `Commission is paid by UPI after the client's payment clears, usually within the month. The minimum payout is ${inr(REFERRAL.minPayout)}. Applicable taxes and charges (such as TDS) are deducted as per rules.` },
   { q: "What are points for?", a: `Every referral that becomes a paying client also earns ${ppc} points. Once you have ${redeemBlock.toLocaleString("en-IN")} points you can redeem them for ${inr(rupeesPerBlock)}.` },
   { q: "Why are there sharing limits?", a: `To keep leads genuine: up to ${limits.day} a day, ${limits.week} a week and ${limits.month} a month. Quality beats quantity, and only real clients earn.` },
   { q: "What if someone else already referred the same person?", a: `The first person to register a lead keeps it for ${leadLockDays} days. You'll see straight away if a contact is already taken.` },

@@ -1,0 +1,3 @@
+# Netlify builds Next.js automatically (OpenNext runtime); this only pins Node.
+[build.environment]
+  NODE_VERSION = "22"

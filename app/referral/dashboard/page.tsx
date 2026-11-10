@@ -163,7 +163,7 @@ export default async function Dashboard() {
           <h2 className="rf-h3">Redeem points</h2>
           <p className="rf-p">
             {REFERRAL.redeemBlock.toLocaleString("en-IN")} points = {inr(REFERRAL.rupeesPerBlock)}, paid to your UPI ID. You have{" "}
-            <b>{b.pointsAvailable}</b> points.
+            <b>{b.pointsAvailable}</b> points. Applicable taxes and charges are deducted as per rules.
           </p>
           <RedeemButton
             disabled={!canRedeem}

@@ -1,4 +1,4 @@
-import { createClient, type Client } from "@libsql/client";
+import type { Client } from "@libsql/client";
 
 /* SQLite via libsql: a local file in development, a hosted Turso
    database in production (set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN). */
@@ -71,16 +71,36 @@ const SCHEMA = [
   )`,
 ];
 
-export async function db() {
-  if (!client) {
-    const url = process.env.TURSO_DATABASE_URL ?? "file:.data/referral.db";
-    if (url.startsWith("file:")) {
-      const { mkdirSync } = await import("node:fs");
-      mkdirSync(".data", { recursive: true });
+/* local file in development; hosted Turso over HTTPS in production.
+   The web client has no native code, so it runs on Netlify/Vercel. */
+async function connect(): Promise<Client> {
+  const url = process.env.TURSO_DATABASE_URL ?? "file:.data/referral.db";
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+
+  if (url.startsWith("file:")) {
+    if (process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      throw new Error("TURSO_DATABASE_URL is not set. A local file can't be used on serverless hosting.");
     }
-    client = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN });
+    const { mkdirSync } = await import("node:fs");
+    mkdirSync(".data", { recursive: true });
+    const { createClient } = await import("@libsql/client");
+    return createClient({ url });
   }
-  if (!ready) ready = client.batch(SCHEMA, "write").then(() => undefined);
+
+  const { createClient } = await import("@libsql/client/web");
+  return createClient({ url: url.replace(/^libsql:/, "https:"), authToken });
+}
+
+export async function db() {
+  if (!client) client = await connect();
+  if (!ready) {
+    ready = client.batch(SCHEMA, "write").then(() => undefined);
+    /* a failed attempt (bad token, network) must not stick */
+    ready.catch(() => {
+      ready = null;
+      client = null;
+    });
+  }
   await ready;
   return client;
 }

@@ -52,6 +52,10 @@ export default function Terms() {
         {inr(minPayout)} rolls over to the next payout. If a client&apos;s payment is refunded or reversed, the matching commission is cancelled.
         Tax may be deducted where the law requires it, and we may ask for your PAN.
       </p>
+      <p>
+        <b>Taxes and charges:</b> all rewards and payouts are subject to applicable taxes and charges as per the rules and laws in force,
+        including tax deducted at source (TDS) where applicable. The amount you receive is the reward after any such deductions.
+      </p>
 
       <h2>5. Sharing limits</h2>
       <p>
