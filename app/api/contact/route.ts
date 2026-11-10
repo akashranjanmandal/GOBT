@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { MAIL_FROM, mailer } from '@/lib/mailer';
+import { cookies } from 'next/headers';
+import { MAIL_FROM, escapeHtml, mailer } from '@/lib/mailer';
+import { REF_COOKIE } from '@/lib/referral/config';
+import { attributeLinkLead } from '@/lib/referral/data';
 
 export async function POST(req: Request) {
   try {
@@ -10,12 +13,17 @@ export async function POST(req: Request) {
     }
 
     
+    /* arrived via someone's referral link? credit the lead to them */
+    const refCode = (await cookies()).get(REF_COOKIE)?.value;
+    const referrer = refCode ? await attributeLinkLead(refCode, { name, email, company, message }) : null;
+    const refLine = referrer ? `Referred by: ${referrer.name} (${referrer.code})` : '';
+
     const mailOptions = {
       from: MAIL_FROM,
       to: 'info@gobt.in',
       replyTo: email,
-      subject: `New Project Inquiry from ${name} (${company || 'No Company'})`,
-      text: `Name: ${name}\nEmail: ${email}\nCompany: ${company}\n\nMessage:\n${message}`,
+      subject: `New Project Inquiry from ${name} (${company || 'No Company'})${referrer ? ` [referral ${referrer.code}]` : ''}`,
+      text: `Name: ${name}\nEmail: ${email}\nCompany: ${company}\n${refLine}\n\nMessage:\n${message}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
           <div style="background: #ff6a2b; padding: 20px; text-align: center;">
@@ -38,6 +46,12 @@ export async function POST(req: Request) {
               <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #eaeaea; font-weight: bold;">Company:</td>
                 <td style="padding: 8px 0; border-bottom: 1px solid #eaeaea;">${company}</td>
+              </tr>
+              ` : ''}
+              ${referrer ? `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eaeaea; font-weight: bold;">Referred by:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eaeaea;">${escapeHtml(referrer.name)} (${escapeHtml(referrer.code)})</td>
               </tr>
               ` : ''}
             </table>

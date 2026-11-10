@@ -21,6 +21,8 @@
 /build
 
 # misc
+# local referral-program database
+/.data/
 .DS_Store
 *.pem
 

@@ -10,6 +10,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  /* libsql loads a native driver for local SQLite files */
+  serverExternalPackages: ["@libsql/client", "libsql"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
