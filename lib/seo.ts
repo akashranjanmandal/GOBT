@@ -131,7 +131,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     lede: "Websites, web apps and e-commerce platforms that load fast, rank on Google and convert visitors into customers — built in Kolkata for businesses across India.",
     overview: [
       "Every website we ship is engineered for three things: speed, search visibility and conversion. We build with Next.js and modern, maintainable stacks, so your site scores well on Core Web Vitals and stays easy to grow.",
-      "From corporate sites for engineering consultancies to luxury e-commerce, booking platforms and marketplaces, we have launched 25+ products — with SEO and performance baked in from day one, not added later.",
+      "From corporate sites for engineering consultancies to luxury e-commerce, booking platforms and marketplaces, we have launched 125+ products — with SEO and performance baked in from day one, not added later.",
     ],
     offerings: [
       { t: "Corporate & business websites", d: "Premium, fast company websites that build trust and generate enquiries." },

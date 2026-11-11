@@ -1785,17 +1785,30 @@ html.is-booted .hud {
   list-style: none;
 }
 
-/* the last row shown while more remain: blurred and fading out,
-   with "See more" sitting over it */
+/* the last row shown while more remain: its top half stays sharp and
+   readable, and from the middle down it blurs and fades into the page,
+   with "See more" sitting under it */
 .wi-row.is-faded {
   position: relative;
-  filter: blur(3px);
-  opacity: 0.45;
   pointer-events: none;
   user-select: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
   border-bottom-color: transparent;
+}
+
+.wi-row.is-faded::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: 50%;
+  bottom: -1px;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--bg) 55%, transparent) 55%, var(--bg) 100%);
+  /* the blur eases in just below the middle instead of starting on a hard line */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 35%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 35%);
 }
 
 .wi-more {
@@ -2020,6 +2033,20 @@ html.is-booted .hud {
 
 .cl-row {
   overflow: hidden;
+  /* rows can be dragged sideways; up-down still scrolls the page */
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cl-row.is-dragging {
+  cursor: grabbing;
+}
+
+.cl-row img {
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .cl-track {

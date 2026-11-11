@@ -30,7 +30,7 @@ export default async function Traffic({ searchParams }: Props) {
     <>
       <PageHead
         title="Link traffic"
-        help="Who is sharing referral links, where, and who opens them. Bots, link previews and repeat visits within an hour are left out, so these are real people."
+        help="Who is sharing referral links, where, and who opens them. Bots and link previews are left out, each person counts once per referrer, and a person already referred by someone else stays with them, so these are real people."
       >
         <RangeTabs base="/referral/admin/traffic" current={days} />
       </PageHead>

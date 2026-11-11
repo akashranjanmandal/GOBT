@@ -648,12 +648,12 @@ export const TECH_RING = [
 ];
 
 export const GOBT_STATS = [
-  { val: 9, sup: "+", label: "Active Clients" },
-  { val: 25, sup: "+", label: "Products Launched" },
+  { val: 19, sup: "+", label: "Active Clients" },
+  { val: 125, sup: "+", label: "Products Launched" },
   { val: 4, sup: "yr", label: "Years Active" },
   { val: 7, sup: "+", label: "Industries Served" },
   { val: 3, sup: "x", label: "Faster Delivery" },
-  { val: 100, sup: "%", label: "Client Retention" },
+  { val: 100, sup: "%", label: "Transparency" },
 ];
 
 export const PROCESS_STEPS = [

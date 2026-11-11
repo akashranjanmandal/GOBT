@@ -7,8 +7,8 @@ import { db } from "@/lib/referral/db";
 import { cleanChannel, isBot, recordClick } from "@/lib/referral/track";
 
 /* gobt.in/r/CODE?s=whatsapp
-   A referral link. It records the visit (real people only, once an hour
-   per person), remembers who referred this visitor and from which channel,
+   A referral link. It records the visit (real people only, once per person
+   per referrer), remembers who referred this visitor and from which channel,
    then shows the site. The contact form credits the lead to that code. */
 export async function GET(req: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -32,9 +32,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
     const secure = process.env.NODE_ENV === "production";
     const base = { maxAge: REFERRAL.leadLockDays * 86_400, sameSite: "lax" as const, path: "/", secure, httpOnly: true };
 
-    res.cookies.set(REF_COOKIE, clean, base);
-    if (channel) res.cookies.set(REF_CHANNEL_COOKIE, channel, base);
     res.cookies.set(VISITOR_COOKIE, visitor, { ...base, maxAge: 365 * 86_400 });
+
+    /* the first referrer keeps this person for 90 days: someone else
+       sending them the same thing later doesn't count or take them over */
+    const existing = jar.get(REF_COOKIE)?.value;
+    if (existing && existing !== clean) return res;
+
+    res.cookies.set(REF_COOKIE, clean, base);
+    if (channel && !existing) res.cookies.set(REF_CHANNEL_COOKIE, channel, base);
 
     const ua = req.headers.get("user-agent") ?? "";
     const self = (await currentUser())?.id === Number(owner.id);

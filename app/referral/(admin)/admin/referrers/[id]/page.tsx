@@ -267,7 +267,7 @@ export default async function ReferrerDetail({ params, searchParams }: Props) {
         </Card>
       </div>
 
-      <Card title="Latest link opens" help="Each real visit to this person's link (bots and repeat visits within an hour aren't counted).">
+      <Card title="Latest link opens" help="Each real visit to this person's link (bots aren't counted, and each person counts only once).">
         {visits.length === 0 ? (
           <Empty>Nobody has opened this link yet.</Empty>
         ) : (

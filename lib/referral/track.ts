@@ -56,15 +56,10 @@ export async function recordClick(input: {
 }) {
   const c = await db();
   const t = now();
-  /* one visit per person per hour: reloading a link doesn't inflate it */
-  const recent = (
-    await c.execute({
-      sql: "SELECT 1 FROM clicks WHERE visitor = ? AND user_id = ? AND created_at > ? LIMIT 1",
-      args: [input.visitor, input.userId, t - 3_600_000],
-    })
-  ).rows[0];
-  if (recent) return;
+  /* one person counts once per referrer, ever: the same link sent to the
+     same person again (or through another app) adds nothing */
   const seen = (await c.execute({ sql: "SELECT 1 FROM clicks WHERE visitor = ? AND user_id = ? LIMIT 1", args: [input.visitor, input.userId] })).rows[0];
+  if (seen) return;
 
   let host: string | null = null;
   try {
@@ -78,7 +73,7 @@ export async function recordClick(input: {
   await c.execute({
     sql: `INSERT INTO clicks (user_id, channel, source_host, device, country, region, city, visitor, is_unique, created_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [input.userId, input.channel, host, deviceOf(input.ua), geo.country, geo.region, geo.city, input.visitor, seen ? 0 : 1, t],
+    args: [input.userId, input.channel, host, deviceOf(input.ua), geo.country, geo.region, geo.city, input.visitor, 1, t],
   });
 }
 
@@ -88,6 +83,14 @@ export async function recordShare(userId: number, channel: string): Promise<bool
   if (!CHANNEL_IDS.includes(channel)) return false;
   const c = await db();
   const t = now();
+  /* pressing share on the same app again within a day counts once */
+  const again = (
+    await c.execute({
+      sql: "SELECT 1 FROM shares WHERE user_id = ? AND channel = ? AND created_at > ? LIMIT 1",
+      args: [userId, channel, t - 86_400_000],
+    })
+  ).rows[0];
+  if (again) return false;
   const today = (await c.execute({ sql: "SELECT COUNT(*) n FROM shares WHERE user_id = ? AND created_at > ?", args: [userId, t - 86_400_000] })).rows[0];
   if (Number(today.n) >= SHARES_PER_DAY) return false;
   await c.execute({ sql: "INSERT INTO shares (user_id, channel, created_at) VALUES (?, ?, ?)", args: [userId, channel, t] });
