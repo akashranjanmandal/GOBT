@@ -293,9 +293,20 @@ export default function Work() {
                 aria-hidden={faded || undefined}
                 inert={faded || undefined}
               >
-                <Link className="wi-link" href={workPath(w.title)} tabIndex={faded ? -1 : undefined}>
-                  {row}
-                </Link>
+                {faded ? (
+                  /* the teaser row: a sharp copy for the top half and a
+                     blurred copy for the bottom half, cross-fading at the middle */
+                  <>
+                    <div className="wi-link wi-fade-sharp">{row}</div>
+                    <div className="wi-link wi-fade-blur" aria-hidden="true">
+                      {row}
+                    </div>
+                  </>
+                ) : (
+                  <Link className="wi-link" href={workPath(w.title)}>
+                    {row}
+                  </Link>
+                )}
               </li>
             );
           })}
