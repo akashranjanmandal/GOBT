@@ -83,7 +83,7 @@ export async function sendLoginCode(rawEmail: string): Promise<{ ok: true } | { 
   return { ok: true };
 }
 
-export async function verifyLoginCode(rawEmail: string, rawCode: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function verifyLoginCode(rawEmail: string, rawCode: string): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
   const email = rawEmail.trim().toLowerCase();
   const code = rawCode.replace(/\D/g, "");
   const c = await db();
@@ -103,14 +103,7 @@ export async function verifyLoginCode(rawEmail: string, rawCode: string): Promis
   if (found.blocked) return { ok: false, error: "This account has been suspended. Please contact us." };
   await c.execute({ sql: "UPDATE users SET last_seen_at = ? WHERE id = ?", args: [now(), found.id] });
 
-  (await cookies()).set(USER_COOKIE, await signToken("referrer", found.id, USER_DAYS * 86_400), {
-    httpOnly: true,
-    secure: secure(),
-    sameSite: "lax",
-    path: "/",
-    maxAge: USER_DAYS * 86_400,
-  });
-  return { ok: true };
+  return { ok: true, token: await signToken("referrer", found.id, USER_DAYS * 86_400) };
 }
 
 /* short, shareable, unique: e.g. RIYA4821 */
@@ -182,15 +175,36 @@ export async function requireUser() {
   return user;
 }
 
-export async function logout() {
-  (await cookies()).delete(USER_COOKIE);
+/* Login cookies are set and cleared by plain API responses (see
+   app/api/referral/...), not by server actions: a cookie plus a redirect
+   in one server-action response doesn't survive every host. */
+type CookieTarget = { cookies: { set: (name: string, value: string, options: Record<string, unknown>) => unknown } };
+
+const baseCookie = () => ({ httpOnly: true, secure: secure(), sameSite: "lax" as const, path: "/" });
+
+export function setUserCookie(res: CookieTarget, token: string) {
+  res.cookies.set(USER_COOKIE, token, { ...baseCookie(), maxAge: USER_DAYS * 86_400 });
+}
+
+export function clearUserCookie(res: CookieTarget) {
+  res.cookies.set(USER_COOKIE, "", { ...baseCookie(), maxAge: 0 });
+}
+
+export function setAdminCookie(res: CookieTarget, token: string) {
+  res.cookies.set(ADMIN_COOKIE, token, { ...baseCookie(), maxAge: ADMIN_HOURS * 3600 });
+}
+
+export function clearAdminCookie(res: CookieTarget & { headers: Headers }) {
+  res.cookies.set(ADMIN_COOKIE, "", { ...baseCookie(), maxAge: 0 });
+  /* earlier versions scoped the admin cookie to /referral/admin; clear that one too */
+  res.headers.append("Set-Cookie", `${ADMIN_COOKIE}=; Path=/referral/admin; Max-Age=0; HttpOnly; SameSite=Lax${secure() ? "; Secure" : ""}`);
 }
 
 /* ═══ admins: email + password ═══ */
 
 export type Admin = { id: number; email: string; name: string };
 
-export async function loginAdmin(rawEmail: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function loginAdmin(rawEmail: string, password: string): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
   const email = rawEmail.trim().toLowerCase();
   const c = await db();
   const row = (await c.execute({ sql: "SELECT * FROM admins WHERE email = ?", args: [email] })).rows[0];
@@ -222,14 +236,7 @@ export async function loginAdmin(rawEmail: string, password: string): Promise<{ 
     sql: "INSERT INTO activity (user_id, actor, kind, detail, created_at) VALUES (NULL, ?, 'admin_login', ?, ?)",
     args: [String(row.name), `${String(row.name)} logged in to the admin panel`, t],
   });
-  (await cookies()).set(ADMIN_COOKIE, await signToken("admin", Number(row.id), ADMIN_HOURS * 3600), {
-    httpOnly: true,
-    secure: secure(),
-    sameSite: "lax",
-    path: "/referral/admin",
-    maxAge: ADMIN_HOURS * 3600,
-  });
-  return { ok: true };
+  return { ok: true, token: await signToken("admin", Number(row.id), ADMIN_HOURS * 3600) };
 }
 
 export async function currentAdmin(): Promise<Admin | null> {
@@ -244,10 +251,6 @@ export async function requireAdmin() {
   const admin = await currentAdmin();
   if (!admin) redirect("/referral/admin/login");
   return admin;
-}
-
-export async function logoutAdmin() {
-  (await cookies()).delete({ name: ADMIN_COOKIE, path: "/referral/admin" });
 }
 
 export async function changeAdminPassword(admin: Admin, current: string, next: string): Promise<{ ok: true } | { ok: false; error: string }> {

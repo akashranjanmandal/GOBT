@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { logout, requireUser, sendLoginCode, verifyLoginCode } from "@/lib/referral/auth";
+import { requireUser, sendLoginCode } from "@/lib/referral/auth";
 import { requestRedeem, submitLead, updateProfile } from "@/lib/referral/data";
 
 /* Actions for referrers (the public side of the programme) */
@@ -18,17 +17,7 @@ export async function sendCodeAction(_: FormState, fd: FormData): Promise<FormSt
   return { step: "code", email, message: `We've emailed a 6-digit code to ${email}.` };
 }
 
-export async function verifyCodeAction(_: FormState, fd: FormData): Promise<FormState> {
-  const email = text(fd, "email");
-  const res = await verifyLoginCode(email, text(fd, "code"));
-  if (!res.ok) return { step: "code", email, error: res.error };
-  redirect("/referral/dashboard");
-}
-
-export async function logoutAction() {
-  await logout();
-  redirect("/referral");
-}
+/* checking the code, and logging out, live in app/api/referral/... (plain responses) */
 
 export async function saveProfileAction(_: FormState, fd: FormData): Promise<FormState> {
   const user = await requireUser();

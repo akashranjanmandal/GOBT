@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { currentAdmin } from "@/lib/referral/auth";
 import { attention } from "@/lib/referral/stats";
 import AdminNav from "@/components/referral/AdminNav";
-import { adminLogoutAction } from "./admin/actions";
 
 export const metadata: Metadata = { title: { default: "Admin", template: "%s | GOBT Referral Admin" }, robots: { index: false } };
 
@@ -37,7 +36,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             {admin.name}
             <small>{admin.email}</small>
           </span>
-          <form action={adminLogoutAction}>
+          <form action="/api/referral/admin/logout" method="post">
             <button className="ad-link">Log out</button>
           </form>
         </div>

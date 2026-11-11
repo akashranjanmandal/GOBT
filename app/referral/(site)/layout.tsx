@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { currentUser } from "@/lib/referral/auth";
-import { logoutAction } from "../actions";
 
 /* The referral programme's public chrome: a chunky header and a small
    footer, instead of the main site's nav and footer. */
@@ -27,7 +26,7 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
               <Link href="/referral/dashboard" className="rf-btn rf-btn-gold rf-btn-sm">
                 My dashboard
               </Link>
-              <form action={logoutAction}>
+              <form action="/api/referral/logout" method="post">
                 <button className="rf-link" type="submit">
                   Log out
                 </button>

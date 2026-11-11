@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { changeAdminPassword, loginAdmin, logoutAdmin, requireAdmin } from "@/lib/referral/auth";
+import { changeAdminPassword, requireAdmin } from "@/lib/referral/auth";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/referral/config";
 import {
   adminRecordPayment,
@@ -19,16 +18,7 @@ export type AdminFormState = { ok?: boolean; error?: string; message?: string };
 const text = (fd: FormData, k: string) => String(fd.get(k) ?? "");
 const refresh = () => revalidatePath("/referral/admin", "layout");
 
-export async function adminLoginAction(_: AdminFormState, fd: FormData): Promise<AdminFormState> {
-  const res = await loginAdmin(text(fd, "email"), text(fd, "password"));
-  if (!res.ok) return { error: res.error };
-  redirect("/referral/admin");
-}
-
-export async function adminLogoutAction() {
-  await logoutAdmin();
-  redirect("/referral/admin/login");
-}
+/* login and logout live in app/api/referral/admin/... (plain responses) */
 
 export async function setLeadStatusAction(fd: FormData) {
   const admin = await requireAdmin();

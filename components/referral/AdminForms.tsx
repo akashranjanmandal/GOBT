@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import {
-  adminLoginAction,
   changePasswordAction,
   recordPaymentAction,
   type AdminFormState,
@@ -19,19 +18,46 @@ const Note = ({ state }: { state: AdminFormState }) =>
     </p>
   ) : null;
 
+/* Posts to /api/referral/admin/login (which sets the login cookie on a
+   plain response), then loads the panel with a full page navigation. */
 export function AdminLoginForm() {
-  const [state, action, pending] = useActionState<AdminFormState, FormData>(adminLoginAction, {});
-  /* kept in state so a wrong password doesn't wipe the email */
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [state, setState] = useState<AdminFormState>({});
+  const [pending, setPending] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPending(true);
+    setState({});
+    try {
+      const res = await fetch("/api/referral/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "same-origin",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        window.location.assign("/referral/admin");
+        return; /* keep the button in its busy state while the panel loads */
+      }
+      setState({ error: data.error ?? "Couldn't log in. Please try again." });
+    } catch {
+      setState({ error: "Couldn't reach the server. Check your connection and try again." });
+    }
+    setPending(false);
+  };
+
   return (
-    <form action={action} className="ad-form">
+    <form onSubmit={submit} className="ad-form">
       <label className="ad-field">
         <span>Email</span>
         <input name="email" type="email" required autoComplete="username" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label className="ad-field">
         <span>Password</span>
-        <input name="password" type="password" required autoComplete="current-password" />
+        <input name="password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       <Note state={state} />
       <button className="ad-btn ad-btn-primary ad-btn-block" disabled={pending}>
