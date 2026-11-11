@@ -36,6 +36,10 @@ export const IconDashboard = () => (
   <svg viewBox="0 0 24 24" {...S}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M8 4v16M11 9h7M11 13h4M11 17h6" /></svg>
 );
 
+export const IconDesktop = () => (
+  <svg viewBox="0 0 24 24" {...S}><rect x="2.5" y="3.5" width="19" height="13" rx="1.8" /><path d="M9 20.5h6M12 16.5v4" /></svg>
+);
+
 export const IconPhone = () => (
   <svg viewBox="0 0 24 24" {...S}><rect x="6.5" y="2.5" width="11" height="19" rx="2.2" /><path d="M10.5 18.5h3" /></svg>
 );

@@ -348,7 +348,7 @@ export const WORKS: Work[] = [
    Leave it out and the card shows the GOBT mark in particles instead. */
 export const TEAM: { name: string; title: string; quote: string; photo?: string }[] = [
   {
-    name: "Suprime Mondal",
+    name: "Suprime Mandal",
     title: "CEO & Founder",
     quote: "We don't build websites, we engineer outcomes. Every pixel, every line of code is a business decision.",
     photo: "/team/suprime.webp",
@@ -682,7 +682,7 @@ export const COMPARE_ROWS = [
   { feature: "No lock-in to a proprietary platform", agency: false, gobt: true },
 ];
 
-export const ESTIMATE_TYPES = ["Website", "Web App", "Mobile App"] as const;
+export const ESTIMATE_TYPES = ["Website", "Mobile App", "Desktop App"] as const;
 export const ESTIMATE_SCOPES = ["Essential", "Momentum", "Full-Scale"] as const;
 
 export type EstimateType = (typeof ESTIMATE_TYPES)[number];
@@ -690,15 +690,15 @@ export type EstimateScope = (typeof ESTIMATE_SCOPES)[number];
 
 export const ESTIMATE_TIMELINES: Record<EstimateType, Record<EstimateScope, string>> = {
   Website: { Essential: "2 weeks", Momentum: "3 weeks", "Full-Scale": "4 weeks" },
-  "Web App": { Essential: "4–5 weeks", Momentum: "6 weeks", "Full-Scale": "7–8 weeks" },
   "Mobile App": { Essential: "4–5 weeks", Momentum: "6 weeks", "Full-Scale": "7–8 weeks" },
+  "Desktop App": { Essential: "4–5 weeks", Momentum: "6 weeks", "Full-Scale": "7–8 weeks" },
 };
 
 /* [firm weeks, upper-bound weeks] for the week-grid readout */
 export const ESTIMATE_WEEKS: Record<EstimateType, Record<EstimateScope, [number, number]>> = {
   Website: { Essential: [2, 2], Momentum: [3, 3], "Full-Scale": [4, 4] },
-  "Web App": { Essential: [4, 5], Momentum: [6, 6], "Full-Scale": [7, 8] },
   "Mobile App": { Essential: [4, 5], Momentum: [6, 6], "Full-Scale": [7, 8] },
+  "Desktop App": { Essential: [4, 5], Momentum: [6, 6], "Full-Scale": [7, 8] },
 };
 
 export const ESTIMATE_TEAM: Record<EstimateScope, string> = {

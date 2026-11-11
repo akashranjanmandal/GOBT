@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { MAIL_FROM, escapeHtml, mailer } from '@/lib/mailer';
-import { REF_COOKIE } from '@/lib/referral/config';
+import { REF_CHANNEL_COOKIE, REF_COOKIE } from '@/lib/referral/config';
 import { attributeLinkLead } from '@/lib/referral/data';
 
 export async function POST(req: Request) {
@@ -14,8 +14,9 @@ export async function POST(req: Request) {
 
     
     /* arrived via someone's referral link? credit the lead to them */
-    const refCode = (await cookies()).get(REF_COOKIE)?.value;
-    const referrer = refCode ? await attributeLinkLead(refCode, { name, email, company, message }) : null;
+    const jar = await cookies();
+    const refCode = jar.get(REF_COOKIE)?.value;
+    const referrer = refCode ? await attributeLinkLead(refCode, { name, email, company, message }, jar.get(REF_CHANNEL_COOKIE)?.value ?? null) : null;
     const refLine = referrer ? `Referred by: ${referrer.name} (${referrer.code})` : '';
 
     const mailOptions = {

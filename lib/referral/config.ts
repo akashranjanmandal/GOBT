@@ -21,8 +21,21 @@ export const REFERRAL = {
   salesInbox: "info@gobt.in",
 } as const;
 
+/* The people who run the programme. These accounts are created on first
+   start with the password whose scrypt hash is in ADMIN_PASSWORD_HASH
+   (set on the host; the password itself is never stored anywhere).
+   Each admin can change their own from the Account page. */
+export const ADMIN_ACCOUNTS = [
+  { email: "akash@gobt.in", name: "Akash" },
+  { email: "gobt.digital@gmail.com", name: "GOBT Digital" },
+  { email: "dev@gobt.in", name: "Dev" },
+] as const;
+
 /* set by gobt.in/r/CODE; read by the contact form API */
 export const REF_COOKIE = "gobt_ref";
+/* which channel the visitor came from, and a per-browser id for unique counts */
+export const REF_CHANNEL_COOKIE = "gobt_ch";
+export const VISITOR_COOKIE = "gobt_vid";
 
 export const LEAD_STATUSES = ["new", "contacted", "qualified", "won", "rejected"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];

@@ -1,4 +1,6 @@
 import type { Client } from "@libsql/client";
+import { ADMIN_ACCOUNTS } from "./config";
+import { isPasswordHash } from "./password";
 
 /* SQLite via libsql: a local file in development, a hosted Turso
    database in production (set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN). */
@@ -69,6 +71,70 @@ const SCHEMA = [
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
+  /* the people who run the programme (separate from referrers) */
+  `CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    failed_count INTEGER NOT NULL DEFAULT 0,
+    locked_until INTEGER NOT NULL DEFAULT 0,
+    last_login_at INTEGER,
+    created_at INTEGER NOT NULL
+  )`,
+  /* every real visit to a referral link */
+  `CREATE TABLE IF NOT EXISTS clicks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    channel TEXT,
+    source_host TEXT,
+    device TEXT,
+    country TEXT,
+    region TEXT,
+    city TEXT,
+    visitor TEXT,
+    is_unique INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS clicks_user ON clicks (user_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS clicks_visitor ON clicks (visitor, user_id)`,
+  /* every time a referrer pressed a share button */
+  `CREATE TABLE IF NOT EXISTS shares (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    channel TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS shares_user ON shares (user_id, created_at)`,
+  /* a readable timeline of what happened */
+  `CREATE TABLE IF NOT EXISTS activity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    actor TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    detail TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS activity_created ON activity (created_at)`,
+  `CREATE TABLE IF NOT EXISTS academy_regs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    class TEXT NOT NULL,
+    school TEXT NOT NULL,
+    mobile TEXT NOT NULL,
+    whatsapp TEXT NOT NULL,
+    address TEXT NOT NULL,
+    course TEXT NOT NULL,
+    location TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+];
+
+/* columns added after the first release; added once, safely */
+const NEW_COLUMNS: [table: string, column: string, definition: string][] = [
+  ["leads", "channel", "TEXT"],
+  ["users", "last_seen_at", "INTEGER"],
+  ["users", "blocked", "INTEGER NOT NULL DEFAULT 0"],
 ];
 
 /* local file in development; hosted Turso over HTTPS in production.
@@ -91,10 +157,40 @@ async function connect(): Promise<Client> {
   return createClient({ url: url.replace(/^libsql:/, "https:"), authToken });
 }
 
+async function prepare(c: Client) {
+  await c.batch(SCHEMA, "write");
+
+  const tables = [...new Set(NEW_COLUMNS.map(([t]) => t))];
+  const info = await c.batch(tables.map((t) => `PRAGMA table_info(${t})`), "read");
+  const have = new Map(tables.map((t, i) => [t, new Set(info[i].rows.map((r) => String(r.name)))]));
+  for (const [table, column, definition] of NEW_COLUMNS) {
+    if (!have.get(table)?.has(column)) await c.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+
+  /* create the admin accounts that don't exist yet. ADMIN_PASSWORD_HASH
+     holds a scrypt hash (made with scripts/hash-password.mjs), never the
+     password itself, and that hash is stored as is. */
+  const hash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  const existing = new Set((await c.execute("SELECT email FROM admins")).rows.map((r) => String(r.email)));
+  const missing = ADMIN_ACCOUNTS.filter((a) => !existing.has(a.email));
+  if (missing.length && !isPasswordHash(hash)) {
+    console.warn("[referral] ADMIN_PASSWORD_HASH is missing or not a valid hash, so admin accounts were not created.");
+  } else if (missing.length && hash) {
+    await c.batch(
+      missing.map((a) => ({
+        sql: "INSERT OR IGNORE INTO admins (email, name, password_hash, created_at) VALUES (?, ?, ?, ?)",
+        args: [a.email, a.name, hash, Date.now()],
+      })),
+      "write"
+    );
+  }
+}
+
 export async function db() {
   if (!client) client = await connect();
   if (!ready) {
-    ready = client.batch(SCHEMA, "write").then(() => undefined);
+    const c = client;
+    ready = prepare(c);
     /* a failed attempt (bad token, network) must not stick */
     ready.catch(() => {
       ready = null;

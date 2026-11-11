@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { CONTACT } from "@/lib/content";
-import { ACADEMY, ACADEMY_COURSES, inr, normaliseMobile, validateAcademy, type AcademyForm } from "@/lib/academy";
+import { ACADEMY, ACADEMY_COURSES, classLabel, inr, normaliseMobile, validateAcademy, type AcademyForm } from "@/lib/academy";
 import { MAIL_FROM, escapeHtml, mailer } from "@/lib/mailer";
+import { db } from "@/lib/referral/db";
 
 /* Academy registrations → an email to the careers inbox */
 export async function POST(req: Request) {
@@ -25,9 +26,26 @@ export async function POST(req: Request) {
     }
 
     const course = ACADEMY_COURSES.find((c) => c.id === form.course)!;
+    const mobile = normaliseMobile(form.mobile)!;
+    const whatsapp = normaliseMobile(form.whatsapp)!;
+
+    /* keep a copy in the database (admin panel → Academy), so a failed
+       email never loses a registration */
+    let stored = false;
+    try {
+      const c = await db();
+      await c.execute({
+        sql: `INSERT INTO academy_regs (name, class, school, mobile, whatsapp, address, course, location, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [form.name.trim(), form.studentClass, form.school.trim(), mobile, whatsapp, form.address.trim(), form.course, form.location, Date.now()],
+      });
+      stored = true;
+    } catch (error) {
+      console.error("Academy registration not stored:", error);
+    }
     const rows: [string, string][] = [
       ["Student name", form.name.trim()],
-      ["Class", form.studentClass],
+      ["Class", classLabel(form.studentClass)],
       ["School", form.school.trim()],
       ["Mobile", `+91 ${normaliseMobile(form.mobile)}`],
       ["WhatsApp", `+91 ${normaliseMobile(form.whatsapp)}`],
@@ -37,10 +55,12 @@ export async function POST(req: Request) {
       ["Nearest location", form.location],
     ];
 
-    await mailer.sendMail({
+    let emailed = false;
+    try {
+      await mailer.sendMail({
       from: MAIL_FROM,
       to: CONTACT.careers,
-      subject: `Academy registration: ${form.name.trim()}, Class ${form.studentClass}, ${course.title}`,
+      subject: `Academy registration: ${form.name.trim()}, ${classLabel(form.studentClass)}, ${course.title}`,
       text: rows.map(([k, v]) => `${k}: ${v}`).join("\n"),
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden;">
@@ -57,8 +77,13 @@ export async function POST(req: Request) {
               .join("")}
           </table>
         </div>`,
-    });
+      });
+      emailed = true;
+    } catch (error) {
+      console.error("Academy registration email failed:", error);
+    }
 
+    if (!stored && !emailed) return NextResponse.json({ error: "Failed to send" }, { status: 500 });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Academy registration failed:", error);

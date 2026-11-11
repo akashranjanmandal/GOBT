@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { redeemAction, saveProfileAction, submitLeadAction, type FormState } from "@/app/referral/actions";
+import { CHANNELS, shareUrl, taggedLink } from "@/lib/referral/channels";
 
 function Status({ state }: { state: FormState }) {
   if (state.error) return <p className="rf-error" role="alert">{state.error}</p>;
@@ -9,17 +10,7 @@ function Status({ state }: { state: FormState }) {
   return null;
 }
 
-export function ProfileForm({
-  name,
-  phone,
-  upi,
-  needsAgree,
-}: {
-  name: string;
-  phone: string;
-  upi: string;
-  needsAgree: boolean;
-}) {
+export function ProfileForm({ name, phone, upi, needsAgree }: { name: string; phone: string; upi: string; needsAgree: boolean }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveProfileAction, {});
   return (
     <form action={action} className="rf-form">
@@ -35,7 +26,7 @@ export function ProfileForm({
       </div>
       <label className="rf-field">
         <span>
-          UPI ID <em>(where we pay you; you can add it later)</em>
+          UPI ID <em>(where we send your money)</em>
         </span>
         <input name="upi" defaultValue={upi} placeholder="yourname@okaxis" autoComplete="off" />
       </label>
@@ -43,7 +34,7 @@ export function ProfileForm({
         <label className="rf-check">
           <input type="checkbox" name="agree" required />
           <span>
-            I&apos;m 18+ and I agree to the{" "}
+            I&apos;m 18 or older and I agree to the{" "}
             <a href="/referral/terms" target="_blank">
               program rules
             </a>
@@ -75,7 +66,7 @@ export function LeadForm({ left }: { left: number }) {
           <input name="name" required />
         </label>
         <label className={`rf-field${bad("phone")}`}>
-          <span>Their mobile</span>
+          <span>Their mobile number</span>
           <input name="phone" required inputMode="tel" placeholder="10-digit number" />
         </label>
         <label className={`rf-field${bad("email")}`}>
@@ -86,14 +77,14 @@ export function LeadForm({ left }: { left: number }) {
         </label>
         <label className="rf-field">
           <span>
-            Business / company <em>(optional)</em>
+            Business name <em>(optional)</em>
           </span>
           <input name="company" />
         </label>
       </div>
       <label className={`rf-field${bad("need")}`}>
-        <span>What do they need?</span>
-        <textarea name="need" rows={3} required placeholder="e.g. A website and online ordering for their bakery in Behala" />
+        <span>What do they need built?</span>
+        <textarea name="need" rows={3} required placeholder="e.g. A website with online ordering for their bakery" />
       </label>
       <label className={`rf-check${bad("consent")}`}>
         <input type="checkbox" name="consent" required />
@@ -119,37 +110,77 @@ export function RedeemButton({ disabled, label }: { disabled: boolean; label: st
   );
 }
 
+const MESSAGE = "Need a website, app or custom software? I recommend GOBT, a deep-tech team from Kolkata.";
+
+/* The link, a copy button and one button per channel. Every press is
+   recorded, and each channel's link is tagged so its clicks can be traced. */
 export function ShareBox({ url, code }: { url: string; code: string }) {
-  const [copied, setCopied] = useState(false);
-  const message = `Need a website, app or custom software? I recommend GOBT, a deep-tech team from Kolkata. Have a look: ${url}`;
+  const [note, setNote] = useState("");
+
+  const report = (channel: string) => {
+    fetch("/api/referral/share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+
+  const copy = async (text: string, message: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setNote(message);
+    } catch {
+      setNote("Couldn't copy automatically. Select the link above and copy it.");
+    }
+    window.setTimeout(() => setNote(""), 3500);
+  };
+
+  const share = (channel: string) => {
+    report(channel);
+    const link = shareUrl(channel, url, MESSAGE);
+    if (!link) {
+      void copy(
+        taggedLink(url, channel),
+        channel === "instagram" ? "Link copied. Paste it in your Instagram story, bio or a message." : "Link copied."
+      );
+    } else if (link.startsWith("mailto:") || link.startsWith("sms:")) {
+      window.location.assign(link);
+    } else {
+      window.open(link, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div className="rf-share">
       <div className="rf-share-link">
-        <code>{url}</code>
+        <code>{url.replace("https://", "")}</code>
         <button
           type="button"
           className="rf-btn rf-btn-ghost rf-btn-sm"
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(url);
-              setCopied(true);
-              window.setTimeout(() => setCopied(false), 1800);
-            } catch {
-              /* clipboard blocked; the link is selectable */
-            }
+          onClick={() => {
+            report("copy");
+            void copy(taggedLink(url, "copy"), "Link copied. Paste it anywhere.");
           }}
         >
-          {copied ? "Copied!" : "Copy"}
+          Copy
         </button>
       </div>
-      <div className="rf-share-actions">
-        <a className="rf-btn rf-btn-mint rf-btn-sm" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer">
-          Share on WhatsApp
-        </a>
-        <span className="rf-fine">
-          Your code: <b>{code}</b>
-        </span>
+      <p className="rf-fine">Or share it in one tap. We keep count so you can see which place works best for you.</p>
+      <div className="rf-channels">
+        {CHANNELS.filter((c) => c.id !== "copy").map((c) => (
+          <button key={c.id} type="button" className={`rf-channel rf-channel-${c.id}`} onClick={() => share(c.id)}>
+            {c.label}
+          </button>
+        ))}
       </div>
+      <p className="rf-fine" aria-live="polite">
+        {note || (
+          <>
+            Your code: <b>{code}</b>
+          </>
+        )}
+      </p>
     </div>
   );
 }

@@ -12,13 +12,13 @@ import {
 } from "@/lib/content";
 import { EVT_PREFILL, scrollToTarget } from "@/lib/scroll";
 import SectionHead from "@/components/ui/SectionHead";
-import { IconBrowser, IconDashboard, IconPhone } from "@/components/ui/icons";
+import { IconBrowser, IconDesktop, IconPhone } from "@/components/ui/icons";
 import { track } from "@/lib/analytics";
 
 const TYPE_ICONS: Record<EstimateType, React.ReactNode> = {
   Website: <IconBrowser />,
-  "Web App": <IconDashboard />,
   "Mobile App": <IconPhone />,
+  "Desktop App": <IconDesktop />,
 };
 
 const MAX_WEEKS = 8;
@@ -56,33 +56,6 @@ function Hologram({ type, level }: { type: EstimateType; level: number }) {
             </g>
           </svg>
         )}
-        {type === "Web App" && (
-          <svg viewBox="0 0 320 210" className="holo-svg">
-            <rect x="4" y="4" width="312" height="202" rx="6" className="holo-frame" />
-            <path d="M64 4v202M64 26h252" className="holo-frame" />
-            <g className={on(0)}>
-              <rect x="14" y="16" width="38" height="8" rx="2" className="holo-fill" />
-              <rect x="14" y="40" width="38" height="6" rx="2" />
-              <rect x="14" y="54" width="30" height="6" rx="2" />
-              <rect x="14" y="68" width="34" height="6" rx="2" />
-              <rect x="76" y="38" width="228" height="78" rx="4" />
-              <path d="M84 104l30-26 26 14 34-34 30 20 34-30 36 20" />
-            </g>
-            <g className={on(1)}>
-              <rect x="76" y="126" width="70" height="34" rx="4" />
-              <rect x="155" y="126" width="70" height="34" rx="4" />
-              <rect x="234" y="126" width="70" height="34" rx="4" />
-              <rect x="84" y="136" width="30" height="10" rx="2" className="holo-fill" />
-              <rect x="163" y="136" width="40" height="10" rx="2" className="holo-fill" />
-              <rect x="242" y="136" width="24" height="10" rx="2" className="holo-fill" />
-            </g>
-            <g className={on(2)}>
-              <path d="M76 172h228M76 184h228M76 196h228" />
-              <rect x="14" y="82" width="38" height="6" rx="2" />
-              <rect x="14" y="96" width="26" height="6" rx="2" />
-            </g>
-          </svg>
-        )}
         {type === "Mobile App" && (
           <svg viewBox="0 0 320 210" className="holo-svg">
             <rect x="112" y="4" width="96" height="202" rx="14" className="holo-frame" />
@@ -104,6 +77,35 @@ function Hologram({ type, level }: { type: EstimateType; level: number }) {
               <circle cx="188" cy="190" r="4" />
               <rect x="40" y="40" width="58" height="96" rx="8" />
               <rect x="222" y="60" width="58" height="96" rx="8" />
+            </g>
+          </svg>
+        )}
+        {type === "Desktop App" && (
+          <svg viewBox="0 0 320 210" className="holo-svg">
+            <rect x="4" y="4" width="312" height="202" rx="6" className="holo-frame" />
+            <path d="M4 20h312M64 20v186" className="holo-frame" />
+            <path d="M270 12h8M288 9h6v6h-6zM302 9l6 6M308 9l-6 6" className="holo-frame" />
+            <rect x="14" y="9" width="44" height="6" rx="2" className="holo-dot" />
+            <g className={on(0)}>
+              <rect x="14" y="30" width="38" height="8" rx="2" className="holo-fill" />
+              <rect x="14" y="48" width="38" height="6" rx="2" />
+              <rect x="14" y="62" width="30" height="6" rx="2" />
+              <rect x="14" y="76" width="34" height="6" rx="2" />
+              <rect x="76" y="32" width="228" height="84" rx="4" />
+              <path d="M84 104l30-26 26 14 34-34 30 20 34-30 36 20" />
+            </g>
+            <g className={on(1)}>
+              <rect x="76" y="126" width="70" height="34" rx="4" />
+              <rect x="155" y="126" width="70" height="34" rx="4" />
+              <rect x="234" y="126" width="70" height="34" rx="4" />
+              <rect x="84" y="136" width="30" height="10" rx="2" className="holo-fill" />
+              <rect x="163" y="136" width="40" height="10" rx="2" className="holo-fill" />
+              <rect x="242" y="136" width="24" height="10" rx="2" className="holo-fill" />
+            </g>
+            <g className={on(2)}>
+              <path d="M76 172h228M76 184h228M76 196h228" />
+              <rect x="14" y="90" width="38" height="6" rx="2" />
+              <rect x="14" y="104" width="26" height="6" rx="2" />
             </g>
           </svg>
         )}

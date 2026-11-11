@@ -4,6 +4,8 @@ import { MAIL_FROM, escapeHtml, mailer } from "@/lib/mailer";
 import { LEAD_STATUSES, REFERRAL, STATUS_LABEL, inr, type LeadStatus } from "./config";
 import { db, now } from "./db";
 import { EMAIL_RE, type User } from "./auth";
+import { logActivity } from "./track";
+import { balances } from "./stats";
 
 const DAY = 86_400_000;
 const num = (v: unknown) => (v == null ? 0 : Number(v));
@@ -19,6 +21,7 @@ export type Lead = {
   need: string;
   notes: string | null;
   source: "form" | "link";
+  channel: string | null;
   status: LeadStatus;
   adminNote: string | null;
   createdAt: number;
@@ -35,6 +38,7 @@ const toLead = (r: Record<string, unknown>): Lead => ({
   need: String(r.need),
   notes: str(r.notes),
   source: r.source === "link" ? "link" : "form",
+  channel: str(r.channel),
   status: (LEAD_STATUSES as readonly string[]).includes(String(r.status)) ? (r.status as LeadStatus) : "new",
   adminNote: str(r.admin_note),
   createdAt: num(r.created_at),
@@ -105,12 +109,17 @@ export async function submitLead(user: User, input: LeadInput): Promise<{ ok: tr
           VALUES (?, ?, ?, ?, ?, ?, 'form', 'new', ?, ?)`,
     args: [user.id, name, phone, email || null, company || null, need, t, t],
   });
+  await logActivity(user.id, user.name ?? user.email, "lead", `${user.name ?? user.email} referred ${name}`);
   await announceLead({ name, phone, email, company, need }, user, "form");
   return { ok: true };
 }
 
 /* a visitor who arrived on a referral link and filled in the contact form */
-export async function attributeLinkLead(code: string, lead: { name: string; email: string; company?: string; message: string }) {
+export async function attributeLinkLead(
+  code: string,
+  lead: { name: string; email: string; company?: string; message: string },
+  channel: string | null = null
+) {
   try {
     const c = await db();
     const ref = (await c.execute({ sql: "SELECT * FROM users WHERE code = ?", args: [code.toUpperCase()] })).rows[0];
@@ -126,10 +135,11 @@ export async function attributeLinkLead(code: string, lead: { name: string; emai
     if (dup) return null;
     const t = now();
     await c.execute({
-      sql: `INSERT INTO leads (referrer_id, name, phone, email, company, need, source, status, created_at, updated_at)
-            VALUES (?, ?, '', ?, ?, ?, 'link', 'new', ?, ?)`,
-      args: [num(ref.id), lead.name.slice(0, 100), email, lead.company?.slice(0, 150) || null, lead.message.slice(0, 1000), t, t],
+      sql: `INSERT INTO leads (referrer_id, name, phone, email, company, need, source, channel, status, created_at, updated_at)
+            VALUES (?, ?, '', ?, ?, ?, 'link', ?, 'new', ?, ?)`,
+      args: [num(ref.id), lead.name.slice(0, 100), email, lead.company?.slice(0, 150) || null, lead.message.slice(0, 1000), channel, t, t],
     });
+    await logActivity(num(ref.id), "visitor", "lead", `${lead.name.slice(0, 100)} contacted GOBT through ${str(ref.name) ?? String(ref.email)}'s link`);
     return { name: str(ref.name) ?? String(ref.email), code: String(ref.code) };
   } catch (error) {
     console.error("[referral] link attribution failed:", error);
@@ -206,40 +216,6 @@ export async function myLedger(userId: number) {
   return rows.map((r) => toEntry(r as Record<string, unknown>));
 }
 
-export async function balances(userId: number) {
-  const c = await db();
-  const l = (
-    await c.execute({
-      sql: `SELECT
-        SUM(CASE WHEN kind='commission' AND status='pending' THEN amount ELSE 0 END) AS cpending,
-        SUM(CASE WHEN kind='commission' AND status='paid' THEN amount ELSE 0 END) AS cpaid,
-        SUM(CASE WHEN kind='points' AND status='approved' THEN amount ELSE 0 END) AS points
-        FROM ledger WHERE user_id = ?`,
-      args: [userId],
-    })
-  ).rows[0];
-  const r = (
-    await c.execute({
-      sql: `SELECT
-        SUM(CASE WHEN status <> 'rejected' THEN points ELSE 0 END) AS used,
-        SUM(CASE WHEN status = 'paid' THEN amount_inr ELSE 0 END) AS redeemed_inr,
-        SUM(CASE WHEN status = 'requested' THEN amount_inr ELSE 0 END) AS requested_inr
-        FROM redemptions WHERE user_id = ?`,
-      args: [userId],
-    })
-  ).rows[0];
-  const pointsEarned = num(l?.points);
-  const pointsUsed = num(r?.used);
-  return {
-    commissionPending: num(l?.cpending),
-    commissionPaid: num(l?.cpaid),
-    pointsEarned,
-    pointsAvailable: pointsEarned - pointsUsed,
-    redeemedInr: num(r?.redeemed_inr),
-    requestedInr: num(r?.requested_inr),
-  };
-}
-
 export async function myRedemptions(userId: number) {
   const c = await db();
   const rows = (await c.execute({ sql: "SELECT * FROM redemptions WHERE user_id = ? ORDER BY created_at DESC", args: [userId] })).rows;
@@ -258,6 +234,7 @@ export async function requestRedeem(user: User): Promise<{ ok: true; points: num
     sql: "INSERT INTO redemptions (user_id, points, amount_inr, status, created_at, updated_at) VALUES (?, ?, ?, 'requested', ?, ?)",
     args: [user.id, points, blocks * REFERRAL.rupeesPerBlock, t, t],
   });
+  await logActivity(user.id, user.name ?? user.email, "redeem", `${user.name ?? user.email} asked to redeem ${points} points (${inr(blocks * REFERRAL.rupeesPerBlock)})`);
   return { ok: true, points };
 }
 
@@ -277,6 +254,7 @@ export async function updateProfile(
     sql: "UPDATE users SET name = ?, phone = ?, upi = ?, agreed_at = COALESCE(agreed_at, ?) WHERE id = ?",
     args: [name, phone, upi || null, now(), user.id],
   });
+  if (!user.agreedAt) await logActivity(user.id, name, "profile", `${name} finished setting up their profile`);
   return { ok: true };
 }
 
@@ -304,7 +282,7 @@ export async function adminLeads(status?: string) {
   }));
 }
 
-export async function adminSetStatus(leadId: number, status: LeadStatus, note: string) {
+export async function adminSetStatus(leadId: number, status: LeadStatus, note: string, actor: string) {
   const c = await db();
   const lead = (await c.execute({ sql: "SELECT * FROM leads WHERE id = ?", args: [leadId] })).rows[0];
   if (!lead) return;
@@ -313,6 +291,9 @@ export async function adminSetStatus(leadId: number, status: LeadStatus, note: s
     sql: "UPDATE leads SET status = ?, admin_note = ?, updated_at = ? WHERE id = ?",
     args: [status, note.trim().slice(0, 500) || null, t, leadId],
   });
+  if (status !== lead.status) {
+    await logActivity(num(lead.referrer_id), actor, "lead_status", `${actor} set ${String(lead.name)} to “${STATUS_LABEL[status]}”`);
+  }
   const points = (
     await c.execute({ sql: "SELECT id, status FROM ledger WHERE lead_id = ? AND kind = 'points' LIMIT 1", args: [leadId] })
   ).rows[0];
@@ -333,7 +314,7 @@ export async function adminSetStatus(leadId: number, status: LeadStatus, note: s
 }
 
 /* money received from the client → the referrer's commission on it */
-export async function adminRecordPayment(leadId: number, amountReceived: number) {
+export async function adminRecordPayment(leadId: number, amountReceived: number, actor: string) {
   if (!Number.isFinite(amountReceived) || amountReceived <= 0) return { ok: false as const, error: "Enter the amount received." };
   const c = await db();
   const lead = (await c.execute({ sql: "SELECT * FROM leads WHERE id = ?", args: [leadId] })).rows[0];
@@ -354,6 +335,7 @@ export async function adminRecordPayment(leadId: number, amountReceived: number)
       t,
     ],
   });
+  await logActivity(num(lead.referrer_id), actor, "payment", `${actor} recorded ${inr(amountReceived)} from ${String(lead.name)}; commission ${inr(commission)}`);
   return { ok: true as const };
 }
 
@@ -374,12 +356,15 @@ export async function adminPayouts() {
   }));
 }
 
-export async function adminSetCommission(entryId: number, status: "paid" | "reversed" | "pending") {
+export async function adminSetCommission(entryId: number, status: "paid" | "reversed" | "pending", actor: string) {
   const c = await db();
+  const row = (await c.execute({ sql: "SELECT user_id, amount FROM ledger WHERE id = ? AND kind = 'commission'", args: [entryId] })).rows[0];
+  if (!row) return;
   await c.execute({
     sql: "UPDATE ledger SET status = ?, updated_at = ? WHERE id = ? AND kind = 'commission'",
     args: [status, now(), entryId],
   });
+  await logActivity(num(row.user_id), actor, "commission", `${actor} marked a ${inr(num(row.amount))} commission as ${status}`);
 }
 
 export async function adminRedemptions() {
@@ -403,40 +388,23 @@ export async function adminRedemptions() {
   }));
 }
 
-export async function adminSetRedemption(id: number, status: "paid" | "rejected") {
+export async function adminSetRedemption(id: number, status: "paid" | "rejected", actor: string) {
   const c = await db();
+  const row = (await c.execute({ sql: "SELECT user_id, amount_inr FROM redemptions WHERE id = ? AND status = 'requested'", args: [id] })).rows[0];
+  if (!row) return;
   await c.execute({
     sql: "UPDATE redemptions SET status = ?, updated_at = ? WHERE id = ? AND status = 'requested'",
     args: [status, now(), id],
   });
+  await logActivity(num(row.user_id), actor, "redemption", `${actor} marked a ${inr(num(row.amount_inr))} points redemption as ${status}`);
 }
 
-export async function adminReferrers() {
+export async function adminSetBlocked(userId: number, blocked: boolean, actor: string) {
   const c = await db();
-  const rows = (
-    await c.execute({
-      sql: `SELECT u.*,
-              (SELECT COUNT(*) FROM leads WHERE referrer_id = u.id) AS leads,
-              (SELECT COUNT(*) FROM leads WHERE referrer_id = u.id AND status = 'won') AS won,
-              (SELECT COALESCE(SUM(amount),0) FROM ledger WHERE user_id = u.id AND kind='commission' AND status='paid') AS paid,
-              (SELECT COALESCE(SUM(amount),0) FROM ledger WHERE user_id = u.id AND kind='commission' AND status='pending') AS pending
-            FROM users u ORDER BY u.created_at DESC LIMIT 500`,
-      args: [],
-    })
-  ).rows;
-  return rows.map((r) => ({
-    id: num(r.id),
-    name: str(r.name),
-    email: String(r.email),
-    phone: str(r.phone),
-    upi: str(r.upi),
-    code: String(r.code),
-    leads: num(r.leads),
-    won: num(r.won),
-    paid: num(r.paid),
-    pending: num(r.pending),
-    createdAt: num(r.created_at),
-  }));
+  const u = (await c.execute({ sql: "SELECT name, email FROM users WHERE id = ?", args: [userId] })).rows[0];
+  if (!u) return;
+  await c.execute({ sql: "UPDATE users SET blocked = ? WHERE id = ?", args: [blocked ? 1 : 0, userId] });
+  await logActivity(userId, actor, blocked ? "blocked" : "unblocked", `${actor} ${blocked ? "suspended" : "re-enabled"} ${str(u.name) ?? String(u.email)}`);
 }
 
 export { STATUS_LABEL };

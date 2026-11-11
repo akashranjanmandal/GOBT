@@ -2,23 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { LEAD_STATUSES, type LeadStatus } from "@/lib/referral/config";
-import { logout, requireAdmin, requireUser, sendLoginCode, verifyLoginCode } from "@/lib/referral/auth";
-import {
-  adminRecordPayment,
-  adminSetCommission,
-  adminSetRedemption,
-  adminSetStatus,
-  requestRedeem,
-  submitLead,
-  updateProfile,
-} from "@/lib/referral/data";
+import { logout, requireUser, sendLoginCode, verifyLoginCode } from "@/lib/referral/auth";
+import { requestRedeem, submitLead, updateProfile } from "@/lib/referral/data";
+
+/* Actions for referrers (the public side of the programme) */
 
 export type FormState = { ok?: boolean; error?: string; field?: string; message?: string; email?: string; step?: "email" | "code" };
 
 const text = (fd: FormData, k: string) => String(fd.get(k) ?? "");
-
-/* ── login ── */
 
 export async function sendCodeAction(_: FormState, fd: FormData): Promise<FormState> {
   const email = text(fd, "email").trim().toLowerCase();
@@ -38,8 +29,6 @@ export async function logoutAction() {
   await logout();
   redirect("/referral");
 }
-
-/* ── referrer ── */
 
 export async function saveProfileAction(_: FormState, fd: FormData): Promise<FormState> {
   const user = await requireUser();
@@ -67,7 +56,7 @@ export async function submitLeadAction(_: FormState, fd: FormData): Promise<Form
   });
   if (!res.ok) return { error: res.error, field: res.field };
   revalidatePath("/referral/dashboard");
-  return { ok: true, message: "Lead submitted! We'll reach out to them and keep you posted here." };
+  return { ok: true, message: "Referral submitted! We'll contact them and you can follow every step in “My referrals”." };
 }
 
 export async function redeemAction(): Promise<FormState> {
@@ -76,39 +65,4 @@ export async function redeemAction(): Promise<FormState> {
   if (!res.ok) return { error: res.error };
   revalidatePath("/referral/dashboard");
   return { ok: true, message: `Redemption requested for ${res.points} points. We'll pay it to your UPI ID.` };
-}
-
-/* ── admin ── */
-
-export async function setLeadStatusAction(fd: FormData) {
-  await requireAdmin();
-  const status = text(fd, "status") as LeadStatus;
-  if (!(LEAD_STATUSES as readonly string[]).includes(status)) return;
-  await adminSetStatus(Number(fd.get("id")), status, text(fd, "note"));
-  revalidatePath("/referral/admin");
-}
-
-export async function recordPaymentAction(_: FormState, fd: FormData): Promise<FormState> {
-  await requireAdmin();
-  const amount = Number(text(fd, "amount").replace(/[^\d.]/g, ""));
-  const res = await adminRecordPayment(Number(fd.get("id")), amount);
-  if (!res.ok) return { error: res.error };
-  revalidatePath("/referral/admin");
-  return { ok: true, message: "Payment recorded; commission added as pending." };
-}
-
-export async function setCommissionAction(fd: FormData) {
-  await requireAdmin();
-  const status = text(fd, "status");
-  if (status !== "paid" && status !== "reversed" && status !== "pending") return;
-  await adminSetCommission(Number(fd.get("id")), status);
-  revalidatePath("/referral/admin");
-}
-
-export async function setRedemptionAction(fd: FormData) {
-  await requireAdmin();
-  const status = text(fd, "status");
-  if (status !== "paid" && status !== "rejected") return;
-  await adminSetRedemption(Number(fd.get("id")), status);
-  revalidatePath("/referral/admin");
 }
