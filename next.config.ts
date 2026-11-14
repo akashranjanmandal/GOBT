@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/certificates/**": ["./lib/certificates/assets/**"],
     "/api/referral/admin/certificates/**": ["./lib/certificates/assets/**"],
+    "/referral/admin/certificates": ["./lib/certificates/assets/**"],
+    "/api/referral/admin/quotations/**": ["./lib/quotations/assets/**"],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

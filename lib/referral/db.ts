@@ -149,6 +149,106 @@ const SCHEMA = [
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
+  /* quotations: never deleted; every save is kept in quotation_versions */
+  `CREATE TABLE IF NOT EXISTS quotations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    seq INTEGER NOT NULL UNIQUE,
+    quote_no TEXT NOT NULL UNIQUE,
+    quote_date TEXT NOT NULL,
+    client TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    payment_mode TEXT NOT NULL,
+    subtotal INTEGER NOT NULL,
+    discount INTEGER NOT NULL,
+    taxable INTEGER NOT NULL,
+    gst INTEGER NOT NULL,
+    grand_total INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'sent',
+    data TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1,
+    created_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_by TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS quotations_date ON quotations (quote_date)`,
+  `CREATE TABLE IF NOT EXISTS quotation_versions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quotation_id INTEGER NOT NULL,
+    version INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    grand_total INTEGER NOT NULL,
+    changes TEXT,
+    edited_by TEXT NOT NULL,
+    edited_at INTEGER NOT NULL,
+    UNIQUE (quotation_id, version)
+  )`,
+  /* everything admins do, for the superadmin */
+  `CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id INTEGER,
+    admin_email TEXT,
+    admin_name TEXT,
+    action TEXT NOT NULL,
+    target TEXT,
+    detail TEXT NOT NULL,
+    ip TEXT,
+    user_agent TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS audit_created ON audit_log (created_at)`,
+  /* saved signatures and stamps for quotations (hidden, never deleted) */
+  `CREATE TABLE IF NOT EXISTS quote_marks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    data TEXT NOT NULL,
+    hidden INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  /* website analytics: one row per page view (no IP addresses are stored) */
+  `CREATE TABLE IF NOT EXISTS site_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pv_id TEXT NOT NULL UNIQUE,
+    visitor TEXT NOT NULL,
+    session TEXT NOT NULL,
+    is_new_visitor INTEGER NOT NULL DEFAULT 0,
+    is_entry INTEGER NOT NULL DEFAULT 0,
+    path TEXT NOT NULL,
+    title TEXT,
+    source TEXT NOT NULL,
+    medium TEXT NOT NULL,
+    referrer_host TEXT,
+    campaign TEXT,
+    term TEXT,
+    device TEXT,
+    browser TEXT,
+    os TEXT,
+    country TEXT,
+    region TEXT,
+    city TEXT,
+    lang TEXT,
+    screen TEXT,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    scroll INTEGER NOT NULL DEFAULT 0,
+    day TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS site_views_created ON site_views (created_at)`,
+  `CREATE INDEX IF NOT EXISTS site_views_session ON site_views (session)`,
+  /* clicks on WhatsApp / call / email links, outbound links and form submits */
+  `CREATE TABLE IF NOT EXISTS site_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor TEXT NOT NULL,
+    session TEXT NOT NULL,
+    path TEXT NOT NULL,
+    name TEXT NOT NULL,
+    label TEXT,
+    day TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS site_events_created ON site_events (created_at)`,
   /* small site settings, e.g. the directors' signature images */
   `CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
@@ -162,6 +262,7 @@ const NEW_COLUMNS: [table: string, column: string, definition: string][] = [
   ["leads", "channel", "TEXT"],
   ["users", "last_seen_at", "INTEGER"],
   ["users", "blocked", "INTEGER NOT NULL DEFAULT 0"],
+  ["admins", "role", "TEXT NOT NULL DEFAULT 'admin'"],
 ];
 
 /* local file in development; hosted Turso over HTTPS in production.
@@ -211,6 +312,12 @@ async function prepare(c: Client) {
       "write"
     );
   }
+
+  /* roles come from config (ADMIN_ACCOUNTS), so they can't be changed from the panel */
+  await c.batch(
+    ADMIN_ACCOUNTS.map((a) => ({ sql: "UPDATE admins SET role = ? WHERE email = ?", args: [a.role, a.email] })),
+    "write"
+  );
 }
 
 export async function db() {

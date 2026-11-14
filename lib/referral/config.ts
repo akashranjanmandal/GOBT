@@ -26,10 +26,12 @@ export const REFERRAL = {
    (set on the host; the password itself is never stored anywhere).
    Each admin can change their own from the Account page. */
 export const ADMIN_ACCOUNTS = [
-  { email: "akash@gobt.in", name: "Akash" },
-  { email: "gobt.digital@gmail.com", name: "GOBT Digital" },
-  { email: "dev@gobt.in", name: "Dev" },
+  { email: "akash@gobt.in", name: "Akash", role: "superadmin" },
+  { email: "gobt.digital@gmail.com", name: "GOBT Digital", role: "admin" },
+  { email: "dev@gobt.in", name: "Dev", role: "admin" },
 ] as const;
+/* role "superadmin" can also read the logs and every quotation's edit history;
+   roles are set here only, never from the panel */
 
 /* set by gobt.in/r/CODE; read by the contact form API */
 export const REF_COOKIE = "gobt_ref";

@@ -202,9 +202,9 @@ export function clearAdminCookie(res: CookieTarget & { headers: Headers }) {
 
 /* ═══ admins: email + password ═══ */
 
-export type Admin = { id: number; email: string; name: string };
+export type Admin = { id: number; email: string; name: string; role: "admin" | "superadmin" };
 
-export async function loginAdmin(rawEmail: string, password: string): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
+export async function loginAdmin(rawEmail: string, password: string): Promise<{ ok: true; token: string; admin: Admin } | { ok: false; error: string }> {
   const email = rawEmail.trim().toLowerCase();
   const c = await db();
   const row = (await c.execute({ sql: "SELECT * FROM admins WHERE email = ?", args: [email] })).rows[0];
@@ -236,20 +236,28 @@ export async function loginAdmin(rawEmail: string, password: string): Promise<{ 
     sql: "INSERT INTO activity (user_id, actor, kind, detail, created_at) VALUES (NULL, ?, 'admin_login', ?, ?)",
     args: [String(row.name), `${String(row.name)} logged in to the admin panel`, t],
   });
-  return { ok: true, token: await signToken("admin", Number(row.id), ADMIN_HOURS * 3600) };
+  const admin: Admin = { id: Number(row.id), email: String(row.email), name: String(row.name), role: row.role === "superadmin" ? "superadmin" : "admin" };
+  return { ok: true, token: await signToken("admin", admin.id, ADMIN_HOURS * 3600), admin };
 }
 
 export async function currentAdmin(): Promise<Admin | null> {
   const id = await readToken((await cookies()).get(ADMIN_COOKIE)?.value, "admin");
   if (!id) return null;
   const c = await db();
-  const row = (await c.execute({ sql: "SELECT id, email, name FROM admins WHERE id = ?", args: [id] })).rows[0];
-  return row ? { id, email: String(row.email), name: String(row.name) } : null;
+  const row = (await c.execute({ sql: "SELECT id, email, name, role FROM admins WHERE id = ?", args: [id] })).rows[0];
+  return row ? { id, email: String(row.email), name: String(row.name), role: row.role === "superadmin" ? "superadmin" : "admin" } : null;
 }
 
 export async function requireAdmin() {
   const admin = await currentAdmin();
   if (!admin) redirect("/referral/admin/login");
+  return admin;
+}
+
+/* logs and edit history: superadmin only */
+export async function requireSuperadmin() {
+  const admin = await requireAdmin();
+  if (admin.role !== "superadmin") redirect("/referral/admin");
   return admin;
 }
 

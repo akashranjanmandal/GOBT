@@ -30,11 +30,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <small>GOBT</small>
           </span>
         </Link>
-        <AdminNav badges={badges} />
+        <AdminNav badges={badges} superadmin={admin.role === "superadmin"} />
         <div className="ad-me">
           <span>
             {admin.name}
-            <small>{admin.email}</small>
+            <small>
+              {admin.email}
+              {admin.role === "superadmin" ? " · superadmin" : ""}
+            </small>
           </span>
           <form action="/api/referral/admin/logout" method="post">
             <button className="ad-link">Log out</button>

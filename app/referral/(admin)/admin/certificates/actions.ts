@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/referral/auth";
+import { audit } from "@/lib/referral/audit";
 import type { CertFields } from "@/lib/certificates/config";
 import { IMAGE_SLOTS, saveCertificate, setCertImage, setCertificateStatus, type ImageSlot } from "@/lib/certificates/store";
 
@@ -35,6 +36,7 @@ export async function saveCertificateAction(_: CertFormState, fd: FormData): Pro
   const id = Number(fd.get("id")) || undefined;
   const res = await saveCertificate(fieldsFrom(fd), admin.name, id);
   if (!res.ok) return { error: res.error };
+  await audit(admin, id ? "certificate.edited" : "certificate.issued", `${id ? "Edited" : "Issued"} certificate ${res.slug} for ${text(fd, "recipient").trim()}`, `certificate:${res.id}`);
   refresh();
   redirect(`/referral/admin/certificates?saved=${encodeURIComponent(res.slug)}`);
 }
@@ -44,6 +46,7 @@ export async function setCertificateStatusAction(fd: FormData) {
   const status = text(fd, "status");
   if (status !== "valid" && status !== "revoked") return;
   await setCertificateStatus(Number(fd.get("id")), status, admin.name);
+  await audit(admin, "certificate.status", `${status === "revoked" ? "Revoked" : "Restored"} certificate #${Number(fd.get("id"))}`, `certificate:${Number(fd.get("id"))}`);
   refresh();
 }
 
@@ -57,6 +60,7 @@ export async function saveCertImageAction(_: CertFormState, fd: FormData): Promi
   const what = slot === "badge" ? "logo" : "signature";
   if (text(fd, "remove") === "1") {
     await setCertImage(slot, null, admin.name);
+    await audit(admin, "certificate.image", `Reset the certificate ${what} (${slot}) to the original`);
     refresh();
     return { message: "Back to the original from GOBT's certificate." };
   }
@@ -66,6 +70,7 @@ export async function saveCertImageAction(_: CertFormState, fd: FormData): Promi
   if (file.size > MAX_IMAGE) return { error: "That image is too large. Keep it under 400 KB." };
   const bytes = Buffer.from(await file.arrayBuffer());
   await setCertImage(slot, `data:${file.type};base64,${bytes.toString("base64")}`, admin.name);
+  await audit(admin, "certificate.image", `Uploaded a new certificate ${what} (${slot}), ${Math.round(file.size / 1024)} KB`);
   refresh();
   return { message: `Saved. Every certificate now shows this ${what}.` };
 }

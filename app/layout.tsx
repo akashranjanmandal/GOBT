@@ -3,7 +3,9 @@ import { JetBrains_Mono, Unbounded } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { KEYWORDS, SITE } from "@/lib/seo";
+import { Suspense } from "react";
 import Analytics from "@/components/Analytics";
+import SiteTracker from "@/components/analytics/SiteTracker";
 
 const display = Unbounded({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
@@ -81,6 +83,9 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         {children}
         <Analytics />
+        <Suspense fallback={null}>
+          <SiteTracker />
+        </Suspense>
       </body>
     </html>
   );
