@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE.url}/academy/form`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE.url}/referral`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE.url}/referral/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE.url}/certificates`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${SITE.url}/careers`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     ...SERVICE_PAGES.map((s) => ({
       url: `${SITE.url}${servicePath(s.slug)}`,

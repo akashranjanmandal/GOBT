@@ -142,6 +142,7 @@ export default function Footer() {
             ))}
             <Link href="/academy">Academy</Link>
             <Link href="/referral">Refer &amp; earn</Link>
+            <Link href="/certificates">Certificates</Link>
           </div>
         </nav>
         <div className="fg-col">

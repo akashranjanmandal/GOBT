@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   /* the local SQLite file driver is native, so it stays out of the bundle (dev only) */
   serverExternalPackages: ["@libsql/client", "libsql"],
+  /* fonts and logo read from disk when certificates are drawn */
+  outputFileTracingIncludes: {
+    "/certificates/**": ["./lib/certificates/assets/**"],
+    "/api/referral/admin/certificates/**": ["./lib/certificates/assets/**"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

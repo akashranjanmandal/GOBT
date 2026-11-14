@@ -128,6 +128,33 @@ const SCHEMA = [
     location TEXT NOT NULL,
     created_at INTEGER NOT NULL
   )`,
+  /* internship, training, work-completion and custom certificates */
+  `CREATE TABLE IF NOT EXISTS certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cert_no TEXT NOT NULL UNIQUE,
+    slug TEXT NOT NULL UNIQUE,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    recipient TEXT NOT NULL,
+    pronoun TEXT NOT NULL DEFAULT 'they',
+    role TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    skills TEXT,
+    body TEXT NOT NULL,
+    note TEXT,
+    issued_on TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'valid',
+    created_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  /* small site settings, e.g. the directors' signature images */
+  `CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
 ];
 
 /* columns added after the first release; added once, safely */

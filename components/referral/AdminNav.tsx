@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/referral/admin/traffic", label: "Link traffic", icon: "↗" },
   { href: "/referral/admin/activity", label: "Activity", icon: "≡" },
   { href: "/referral/admin/academy", label: "Academy", icon: "✎" },
+  { href: "/referral/admin/certificates", label: "Certificates", icon: "✦" },
   { href: "/referral/admin/account", label: "My account", icon: "⚙" },
 ];
 
