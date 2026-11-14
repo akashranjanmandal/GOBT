@@ -58,7 +58,7 @@ export async function saveCertImageAction(_: CertFormState, fd: FormData): Promi
   if (text(fd, "remove") === "1") {
     await setCertImage(slot, null, admin.name);
     refresh();
-    return { message: slot === "badge" ? "Removed. The top-right corner is now empty." : "Removed. The name is shown in script until a new one is uploaded." };
+    return { message: "Back to the original from GOBT's certificate." };
   }
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: `Choose an image of the ${what}.` };

@@ -6,6 +6,7 @@ import { getCertImages, listCertificates } from "@/lib/certificates/store";
 import { PageHead, StatusChip } from "@/components/referral/adminui";
 import { Card, Empty, Stat } from "@/components/referral/ui";
 import CertImageForm from "@/components/certificates/CertImageForm";
+import { defaultCertImages } from "@/lib/certificates/render";
 import { setCertificateStatusAction } from "./actions";
 
 export const metadata: Metadata = { title: "Certificates" };
@@ -14,6 +15,7 @@ export default async function Certificates({ searchParams }: { searchParams: Pro
   await requireAdmin();
   const { q = "", saved } = await searchParams;
   const [all, rows, images] = await Promise.all([listCertificates({ includeRevoked: true }), listCertificates({ q, includeRevoked: true }), getCertImages()]);
+  const defaults = defaultCertImages();
   const savedCert = saved ? all.find((c) => c.slug === saved) : null;
 
   return (
@@ -114,7 +116,7 @@ export default async function Certificates({ searchParams }: { searchParams: Pro
 
       <Card
         title="Signatures & logo"
-        help="Upload these once and they're printed on every certificate, old and new. PNG with a transparent background works best."
+        help="Every certificate uses these. They start as the ones on GOBT's original certificate; upload a PNG (transparent background works best) to replace one, on every certificate old and new."
       >
         <div className="cf-sigs">
           {SIGNATORIES.map((s, i) => (
@@ -123,15 +125,14 @@ export default async function Certificates({ searchParams }: { searchParams: Pro
               slot={String(i) as "0" | "1"}
               label={`${s.name} — signature`}
               current={images.signatures[i]}
-              placeholder={s.name}
-              empty="No image yet. The name is printed in a handwriting font."
+              fallback={defaults.signatures[i]}
             />
           ))}
           <CertImageForm
             slot="badge"
             label="Top-right logo (e.g. DPIIT / Startup India)"
             current={images.badge}
-            empty="No logo yet, so the top-right corner is left empty."
+            fallback={defaults.badge}
           />
         </div>
       </Card>
