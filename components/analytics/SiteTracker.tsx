@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useReportWebVitals } from "next/web-vitals";
 
 /* GOBT's own analytics tracker: page views, time on page, scroll depth and
    the clicks that matter (WhatsApp, call, email, outbound links, forms).
@@ -68,6 +69,14 @@ const untracked = (path: string) => /^\/(referral\/admin|api\/)/.test(path);
 export default function SiteTracker() {
   const pathname = usePathname();
   const search = useSearchParams();
+  /* the page view the browser loaded first: Core Web Vitals belong to it */
+  const firstView = useRef<{ pv: string; v: string; s: string } | null>(null);
+  useReportWebVitals((metric) => {
+    const f = firstView.current;
+    if (!f || !["LCP", "INP", "CLS", "FCP", "TTFB"].includes(metric.name)) return;
+    send({ t: "vit", pv: f.pv, v: f.v, s: f.s, m: metric.name, val: Math.round(metric.value * (metric.name === "CLS" ? 1000 : 1)) / (metric.name === "CLS" ? 1000 : 1) });
+  });
+  const prevPath = useRef<string | null>(null);
   const view = useRef<{ pv: string; v: string; s: string; start: number; visible: number; since: number | null; scroll: number } | null>(null);
 
   /* engagement for the page being left */
@@ -84,6 +93,8 @@ export default function SiteTracker() {
     const { v, s, nv, ns } = ids();
     const pv = rid();
     view.current = { pv, v, s, start: Date.now(), visible: 0, since: document.visibilityState === "visible" ? Date.now() : null, scroll: 0 };
+    firstView.current ??= { pv, v, s };
+    const notFound = Boolean(document.querySelector("[data-not-found]"));
     send({
       t: "pv",
       pv,
@@ -94,10 +105,12 @@ export default function SiteTracker() {
       p: pathname,
       q: q ? `?${q}` : "",
       ti: document.title,
-      r: ns ? document.referrer : "",
+      r: notFound && prevPath.current ? `${location.origin}${prevPath.current}` : ns || notFound ? document.referrer : "",
+      nf: notFound,
       w: window.innerWidth,
       lang: navigator.language,
     });
+    prevPath.current = pathname;
     return () => flush();
      
   }, [pathname, search]);

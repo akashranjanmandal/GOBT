@@ -249,6 +249,16 @@ const SCHEMA = [
     created_at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS site_events_created ON site_events (created_at)`,
+  `CREATE INDEX IF NOT EXISTS site_events_session ON site_events (session)`,
+  /* Google's view of each page (URL Inspection), refreshed on request */
+  `CREATE TABLE IF NOT EXISTS gsc_inspections (
+    url TEXT PRIMARY KEY,
+    verdict TEXT,
+    coverage TEXT,
+    last_crawl TEXT,
+    data TEXT NOT NULL,
+    checked_at INTEGER NOT NULL
+  )`,
   /* small site settings, e.g. the directors' signature images */
   `CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
@@ -263,6 +273,13 @@ const NEW_COLUMNS: [table: string, column: string, definition: string][] = [
   ["users", "last_seen_at", "INTEGER"],
   ["users", "blocked", "INTEGER NOT NULL DEFAULT 0"],
   ["admins", "role", "TEXT NOT NULL DEFAULT 'admin'"],
+  /* page speed measured in real visitors' browsers (Core Web Vitals) and 404s */
+  ["site_views", "not_found", "INTEGER NOT NULL DEFAULT 0"],
+  ["site_views", "lcp", "REAL"],
+  ["site_views", "inp", "REAL"],
+  ["site_views", "cls", "REAL"],
+  ["site_views", "fcp", "REAL"],
+  ["site_views", "ttfb", "REAL"],
 ];
 
 /* local file in development; hosted Turso over HTTPS in production.

@@ -62,15 +62,23 @@ export function Trend({ data, a, b }: { data: { label: string; a: number; b: num
   );
 }
 
-export function Tabs({ current }: { current: "site" | "search" }) {
+export type TabId = "site" | "leads" | "pages" | "search" | "index";
+const TABS: { id: TabId; href: string; label: string; keepsFilter: boolean }[] = [
+  { id: "site", href: "/referral/admin/analytics", label: "Traffic", keepsFilter: true },
+  { id: "leads", href: "/referral/admin/analytics/leads", label: "Leads", keepsFilter: true },
+  { id: "pages", href: "/referral/admin/analytics/pages", label: "Pages & speed", keepsFilter: true },
+  { id: "search", href: "/referral/admin/analytics/search", label: "Google Search", keepsFilter: false },
+  { id: "index", href: "/referral/admin/analytics/index", label: "Google index", keepsFilter: false },
+];
+
+export function Tabs({ current, query = "" }: { current: TabId; query?: string }) {
   return (
     <nav className="an-tabs" aria-label="Analytics">
-      <Link href="/referral/admin/analytics" className={current === "site" ? "is-on" : ""} aria-current={current === "site" ? "page" : undefined}>
-        Website traffic
-      </Link>
-      <Link href="/referral/admin/analytics/search" className={current === "search" ? "is-on" : ""} aria-current={current === "search" ? "page" : undefined}>
-        Google Search
-      </Link>
+      {TABS.map((t) => (
+        <Link key={t.id} href={t.keepsFilter && query ? `${t.href}?${query}` : t.href} className={current === t.id ? "is-on" : ""} aria-current={current === t.id ? "page" : undefined}>
+          {t.label}
+        </Link>
+      ))}
     </nav>
   );
 }

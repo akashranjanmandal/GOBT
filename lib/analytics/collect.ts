@@ -91,7 +91,7 @@ const clean = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/[
 export const untracked = (path: string) => /^\/(referral\/admin|api\/|_next\/)/.test(path);
 
 export type Beacon = {
-  t: "pv" | "eng" | "ev";
+  t: "pv" | "eng" | "ev" | "vit";
   pv?: string;
   v?: string;
   s?: string;
@@ -107,9 +107,13 @@ export type Beacon = {
   sc?: number;
   n?: string; // event name
   l?: string; // event label
+  nf?: boolean; // the page was a 404
+  m?: string; // web-vital name
+  val?: number; // web-vital value
 };
 
-const EVENTS = new Set(["whatsapp_click", "call_click", "email_click", "outbound_click", "form_submit", "cta_click", "download"]);
+const EVENTS = new Set(["whatsapp_click", "call_click", "email_click", "outbound_click", "form_submit", "cta_click", "download", "not_found"]);
+const VITALS: Record<string, [col: string, max: number]> = { LCP: ["lcp", 120_000], INP: ["inp", 60_000], CLS: ["cls", 50], FCP: ["fcp", 120_000], TTFB: ["ttfb", 120_000] };
 
 export async function collect(b: Beacon, headers: Headers, siteHost: string) {
   const ua = headers.get("user-agent") ?? "";
@@ -117,6 +121,14 @@ export async function collect(b: Beacon, headers: Headers, siteHost: string) {
   if (!b.v || !ID.test(b.v) || !b.s || !ID.test(b.s)) return "bad";
   const c = await db();
   const t = now();
+
+  if (b.t === "vit") {
+    const v = VITALS[clean(b.m, 8)];
+    const val = Number(b.val);
+    if (!v || !b.pv || !ID.test(b.pv) || !Number.isFinite(val) || val < 0 || val > v[1]) return "bad";
+    await c.execute({ sql: `UPDATE site_views SET ${v[0]} = ? WHERE pv_id = ? AND visitor = ?`, args: [val, b.pv, b.v] });
+    return "ok";
+  }
 
   if (b.t === "eng") {
     if (!b.pv || !ID.test(b.pv)) return "bad";
@@ -154,7 +166,7 @@ export async function collect(b: Beacon, headers: Headers, siteHost: string) {
   const width = Math.max(0, Math.min(Number(b.w) || 0, 10000));
   await c.execute({
     sql: `INSERT OR IGNORE INTO site_views (pv_id, visitor, session, is_new_visitor, is_entry, path, title, source, medium, referrer_host, campaign, term,
-          device, browser, os, country, region, city, lang, screen, day, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          device, browser, os, country, region, city, lang, screen, day, created_at, not_found) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       b.pv,
       b.v,
@@ -178,7 +190,15 @@ export async function collect(b: Beacon, headers: Headers, siteHost: string) {
       width ? `${width}px` : null,
       istDay(t),
       t,
+      b.nf ? 1 : 0,
     ],
   });
+  /* a broken link: remember where people came from so it can be fixed */
+  if (b.nf) {
+    await c.execute({
+      sql: "INSERT INTO site_events (visitor, session, path, name, label, day, created_at) VALUES (?, ?, ?, 'not_found', ?, ?, ?)",
+      args: [b.v, b.s, path, clean(b.r, 300) || "(typed or bookmarked)", istDay(t), t],
+    });
+  }
   return "ok";
 }

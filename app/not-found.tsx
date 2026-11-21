@@ -11,7 +11,7 @@ export default function NotFound() {
     <>
       <div className="bg-layer" aria-hidden="true" />
       <Nav />
-      <main id="main" className="sp">
+      <main id="main" className="sp" data-not-found="">
         <section className="wrap nf">
           <p className="cs-tag">404</p>
           <h1 className="sp-title">This page doesn&apos;t exist.</h1>
