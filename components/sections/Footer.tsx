@@ -25,7 +25,7 @@ const SOCIAL_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function Footer() {
+export default function Footer({ light = false }: { light?: boolean }) {
   const root = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +87,7 @@ export default function Footer() {
   const words = [...MARQUEE_WORDS, ...MARQUEE_WORDS];
 
   return (
-    <footer className="footer" ref={root}>
+    <footer className={light ? "footer footer-light" : "footer"} ref={root}>
       <div className="fm" aria-hidden="true">
         <div className="fm-track" ref={trackRef}>
           {words.map((w, i) => (

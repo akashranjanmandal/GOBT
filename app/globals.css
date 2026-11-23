@@ -415,6 +415,15 @@ main section {
   opacity: 1;
 }
 
+.nav-light {
+  background: #fff;
+  border-bottom: 1px solid #e2e6ed;
+}
+
+.nav-light::before {
+  content: none;
+}
+
 /* only while the homepage loader is up — other pages have none */
 html:has(.loader):not(.is-booted) .nav {
   opacity: 0;
@@ -4684,6 +4693,29 @@ fieldset.est-group .est-types {
   padding-top: var(--section-y);
   overflow: hidden;
   border-top: 1px solid var(--line);
+}
+
+.footer-light {
+  --ink: #17233b;
+  --ink-2: #34425c;
+  --ink-3: #4e5b71;
+  --line: #e2e6ed;
+  --line-2: #c1cad8;
+  --line-soft: var(--line);
+  --gold: #805612;
+  --gold-hi: #68430b;
+  background: #fff;
+  color: var(--ink);
+}
+
+.footer-light .fc-title .text-metal {
+  color: var(--gold);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.footer-light .fg-socials a:hover {
+  color: #fff;
 }
 
 .fm {

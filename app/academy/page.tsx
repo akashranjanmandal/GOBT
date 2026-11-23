@@ -75,7 +75,7 @@ export default function AcademyPage() {
 
   return (
     <>
-      <Nav />
+      <Nav light />
       <main id="main" className="acx">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structured) }} />
 
@@ -274,7 +274,7 @@ export default function AcademyPage() {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer light />
     </>
   );
 }

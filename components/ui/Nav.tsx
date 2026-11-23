@@ -5,9 +5,9 @@ import { useEffect, useRef } from "react";
 import { onSectionLink } from "@/lib/scroll";
 
 /* Minimal header: the mark on the left, one call to action on the
-   right. It never hides, and picks up a dark backing once the page
-   has scrolled so the button stays legible over content. */
-export default function Nav() {
+   right. The dark variant picks up a backing on scroll so the
+   button stays legible over content. */
+export default function Nav({ light = false }: { light?: boolean }) {
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function Nav() {
   }, []);
 
   return (
-    <header className="nav" ref={navRef}>
+    <header className={light ? "nav nav-light" : "nav"} ref={navRef}>
       <div className="nav-inner">
         <Link
           href="/"

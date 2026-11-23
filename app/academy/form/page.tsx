@@ -33,7 +33,7 @@ export default function AcademyFormPage() {
   const photo = availablePhotos()[0];
   return (
     <>
-      <Nav />
+      <Nav light />
       <main id="main" className="acx acx-formpage">
         <div className="acx-wrap">
           <nav className="acx-crumbs" aria-label="Breadcrumb">
@@ -102,7 +102,7 @@ export default function AcademyFormPage() {
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer light />
     </>
   );
 }
